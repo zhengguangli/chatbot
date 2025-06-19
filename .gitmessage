@@ -1,0 +1,8 @@
+# <type>(<scope>): <subject>
+# 
+# <body>
+# 
+# <footer>
+#
+# 类型: feat, fix, docs, style, refactor, test, chore, perf
+# 范围: ui, core, config, utils, docs, build, env

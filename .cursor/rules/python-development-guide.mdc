@@ -1,0 +1,82 @@
+# Python开发指南
+
+## 开发环境
+
+### Python版本
+- 要求：Python >= 3.9
+- 当前项目配置在 [pyproject.toml](mdc:pyproject.toml)
+
+### 包管理
+- 使用UV作为包管理器
+- 依赖配置：[pyproject.toml](mdc:pyproject.toml)
+- 锁定文件：[uv.lock](mdc:uv.lock)
+
+### 常用命令
+```bash
+# 同步依赖
+uv sync
+
+# 运行Web界面
+uv run streamlit run main.py
+
+# 运行CLI界面
+uv run python main.py
+
+# 代码格式化
+uv run black .
+
+# 运行测试
+uv run pytest
+```
+
+## 代码结构
+
+### 模块组织
+- **配置模块** ([src/config/](mdc:src/config/)) - 环境变量和设置
+- **核心模块** ([src/core/](mdc:src/core/)) - 业务逻辑和API客户端
+- **界面模块** ([src/ui/](mdc:src/ui/)) - Web和CLI界面
+- **工具模块** ([src/utils/](mdc:src/utils/)) - 错误处理和消息工具
+
+### 主要入口
+- [main.py](mdc:main.py) - 智能检测界面类型并启动相应模式
+- [src/__init__.py](mdc:src/__init__.py) - 导出主要接口函数
+
+## 代码风格
+
+### Black配置
+在 [pyproject.toml](mdc:pyproject.toml) 中配置：
+- 行长度：88字符
+- 目标版本：Python 3.9+
+- 自动格式化所有.py文件
+
+### 开发规范
+- 使用类型提示
+- 编写文档字符串
+- 遵循PEP 8规范
+- 使用有意义的变量和函数名
+
+## 错误处理
+
+### 错误分类
+参考 [src/utils/errors.py](mdc:src/utils/errors.py)：
+- API错误处理
+- 网络超时处理
+- 配置错误处理
+- 用户输入验证
+
+### 异常处理原则
+- 捕获具体异常类型
+- 提供用户友好的错误信息
+- 记录详细的错误日志
+- 实现优雅降级
+
+## 测试
+
+### 测试框架
+- 使用pytest进行单元测试
+- 配置在开发依赖中
+
+### 测试组织
+- 测试文件以test_开头
+- 与源码结构保持对应
+- 覆盖核心业务逻辑

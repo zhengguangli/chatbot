@@ -1,0 +1,68 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# UV包管理工具指南
+
+## UV概述
+UV是一个极快的Python包管理器，用于替代pip和pip-tools。本项目使用UV管理所有Python依赖。
+
+## 项目配置文件
+- [pyproject.toml](mdc:pyproject.toml) - 主要配置文件，定义项目元数据和依赖
+- [.python-version](mdc:.python-version) - 指定项目Python版本
+- `.venv/` - UV自动创建和管理的虚拟环境目录
+
+## 常用UV命令
+
+### 项目初始化
+```bash
+uv init                    # 初始化新项目
+uv python install 3.9     # 安装指定Python版本
+```
+
+### 依赖管理
+```bash
+uv add <package>           # 添加生产依赖
+uv add --dev <package>     # 添加开发依赖
+uv remove <package>        # 移除依赖
+uv sync                    # 同步环境依赖
+uv lock                    # 生成锁定文件
+```
+
+### 运行命令
+```bash
+uv run python main.py      # 在虚拟环境中运行Python
+uv run <command>           # 运行任意命令
+uv shell                   # 激活虚拟环境shell
+```
+
+## 聊天机器人项目推荐依赖
+
+### 核心AI库
+- `uv add openai` - OpenAI GPT API
+- `uv add anthropic` - Anthropic Claude API
+- `uv add langchain` - LangChain框架
+- `uv add transformers` - Hugging Face模型
+
+### Web框架（可选）
+- `uv add streamlit` - 快速Web UI
+- `uv add fastapi uvicorn` - REST API服务
+- `uv add flask` - 轻量级Web框架
+
+### 开发工具
+- `uv add --dev pytest` - 测试框架
+- `uv add --dev black` - 代码格式化
+- `uv add --dev flake8` - 代码检查
+
+## 最佳实践
+1. 始终在项目根目录运行UV命令
+2. 定期运行 `uv sync` 保持环境最新
+3. 提交 `pyproject.toml` 到版本控制
+4. 不要提交 `.venv/` 目录到版本控制
+5. 使用 `uv export > requirements.txt` 为不支持UV的环境生成兼容文件
+
+## 故障排除
+- 如果环境出现问题，删除 `.venv/` 目录然后运行 `uv sync`
+- 使用 `uv --version` 检查UV版本
+- 使用 `uv python list` 查看可用Python版本

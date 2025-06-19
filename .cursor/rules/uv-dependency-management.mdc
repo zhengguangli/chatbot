@@ -1,0 +1,121 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# UV依赖管理实践指南
+
+## 当前项目依赖状态
+项目使用 [pyproject.toml](mdc:pyproject.toml) 和 [uv.lock](mdc:uv.lock) 管理依赖关系。
+
+## 生产依赖
+
+### 核心AI库
+- `openai>=1.88.0` - OpenAI API客户端，用于GPT模型调用
+- `langchain>=0.3.25` - AI应用开发框架，支持复杂AI工作流
+- `streamlit>=1.46.0` - Web界面框架，提供聊天机器人Web UI
+
+### 依赖树分析
+- OpenAI库带来了 `httpx`, `pydantic`, `typing-extensions` 等核心依赖
+- LangChain引入了 `sqlalchemy`, `pyyaml`, `tenacity` 等工具
+- Streamlit包含了 `pandas`, `numpy`, `altair` 等数据处理库
+
+## 开发依赖
+
+### 代码质量工具
+- `pytest>=8.4.1` - 测试框架
+- `black>=25.1.0` - 代码格式化工具
+
+## UV操作指南
+
+### 环境管理
+```bash
+# 同步所有依赖
+uv sync
+
+# 同步仅生产依赖
+uv sync --only-production
+
+# 清理并重建环境
+rm -rf .venv && uv sync
+```
+
+### 依赖操作
+```bash
+# 添加聊天机器人相关包
+uv add anthropic              # Anthropic Claude API
+uv add google-generativeai    # Google Gemini API
+uv add transformers          # Hugging Face模型
+
+# 添加开发工具
+uv add --dev mypy            # 类型检查
+uv add --dev flake8          # 代码风格检查
+uv add --dev pytest-cov     # 测试覆盖率
+
+# 升级依赖
+uv add "openai>=2.0.0"       # 升级到特定版本
+uv sync --upgrade            # 升级所有包
+```
+
+### 运行命令
+```bash
+# 在虚拟环境中运行聊天机器人
+uv run streamlit run main.py
+uv run python main.py
+
+# 运行开发工具
+uv run black main.py
+uv run pytest
+uv run mypy main.py
+```
+
+## 依赖管理最佳实践
+
+### 版本控制
+- 提交 [pyproject.toml](mdc:pyproject.toml) 到版本控制
+- 提交 [uv.lock](mdc:uv.lock) 确保团队环境一致
+- 不要提交 `.venv/` 目录
+
+### 环境隔离
+- 每个项目使用独立的虚拟环境
+- 通过 [.python-version](mdc:.python-version) 锁定Python版本
+- 使用 `uv run` 确保运行在正确环境中
+
+### 性能优化
+- 定期运行 `uv cache clean` 清理缓存
+- 使用 `uv export > requirements.txt` 为CI/CD生成传统格式
+- 配置代理以提高下载速度（如需要）
+
+## 故障排除
+
+### 常见问题解决
+```bash
+# 依赖冲突
+uv lock --resolution lowest-direct  # 尝试最低版本解决
+
+# 网络问题
+UV_HTTP_TIMEOUT=120 uv sync         # 增加超时时间
+
+# 缓存问题
+uv cache clean && uv sync           # 清理缓存重试
+
+# 环境损坏
+rm -rf .venv && uv sync             # 重建环境
+```
+
+### 代理配置
+当使用代理时，UV会自动检测系统代理设置：
+```bash
+export https_proxy=http://127.0.0.1:7897
+export http_proxy=http://127.0.0.1:7897
+uv sync
+```
+
+## 未来扩展建议
+
+### 可添加的依赖
+- `fastapi` + `uvicorn` - API服务
+- `redis` - 会话缓存
+- `sqlite3` - 本地数据存储
+- `python-dotenv` - 环境变量管理
+- `loguru` - 结构化日志

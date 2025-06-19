@@ -1,0 +1,165 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Streamlit界面开发指南
+
+## 界面架构
+[main.py](mdc:main.py) 实现了一个完整的Streamlit聊天界面，支持实时对话和会话管理。
+
+## 核心界面组件
+
+### 页面布局
+- `st.title()` - 应用标题："🤖 智能聊天机器人"
+- `st.write()` - 欢迎信息展示
+- `st.chat_input()` - 底部聊天输入框
+- `st.chat_message()` - 消息气泡展示
+
+### 会话状态管理
+- `st.session_state.conversation_history` - 存储完整对话历史
+- 自动持久化用户会话
+- 历史长度限制（20条消息）
+
+### 交互流程
+1. 用户输入消息
+2. 显示用户消息气泡
+3. 显示"思考中..."状态指示器
+4. 调用OpenAI API获取响应
+5. 显示AI响应气泡
+6. 更新会话历史
+
+## 运行方式
+
+### 启动命令
+```bash
+# 启动Streamlit应用
+uv run streamlit run main.py
+
+# 指定端口
+uv run streamlit run main.py --server.port 8502
+
+# 禁用自动重载
+uv run streamlit run main.py --server.runOnSave false
+```
+
+### 访问地址
+- 本地开发：`http://localhost:8501`
+- 网络访问：`http://0.0.0.0:8501`
+
+## 界面特性
+
+### 用户体验
+- 实时消息展示
+- 自动滚动到最新消息
+- 加载状态指示器
+- 错误信息友好提示
+
+### 响应式设计
+- 自适应不同屏幕尺寸
+- 移动设备友好
+- 现代化聊天界面风格
+
+## 高级功能扩展
+
+### 可添加的Streamlit组件
+```python
+# 侧边栏配置
+with st.sidebar:
+    st.selectbox("选择模型", ["gpt-3.5-turbo", "gpt-4"])
+    st.slider("温度", 0.0, 2.0, 0.7)
+    st.button("清除历史")
+
+# 文件上传
+uploaded_file = st.file_uploader("上传文档", type=['txt', 'pdf'])
+
+# 多列布局
+col1, col2 = st.columns(2)
+with col1:
+    st.button("导出对话")
+with col2:
+    st.button("分享对话")
+```
+
+### 状态管理扩展
+```python
+# 用户设置
+if "user_settings" not in st.session_state:
+    st.session_state.user_settings = {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.7,
+        "max_tokens": 1000
+    }
+
+# 对话分类
+if "conversation_topics" not in st.session_state:
+    st.session_state.conversation_topics = []
+```
+
+## 部署配置
+
+### Streamlit配置文件
+创建 `.streamlit/config.toml`：
+```toml
+[server]
+port = 8501
+enableCORS = false
+enableXsrfProtection = false
+
+[theme]
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+```
+
+### 生产部署
+```bash
+# 使用Streamlit Cloud
+# 或者Docker部署
+# 或者使用其他云平台
+```
+
+## 错误处理
+
+### API错误处理
+- OpenAI API密钥验证
+- 网络连接检查
+- 用户友好的错误消息
+
+### 界面异常处理
+- 会话状态恢复
+- 输入验证
+- 优雅降级
+
+## 性能优化
+
+### 缓存策略
+```python
+@st.cache_data
+def load_model_info():
+    return {"models": ["gpt-3.5-turbo", "gpt-4"]}
+
+@st.cache_resource
+def init_openai_client():
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+```
+
+### 响应优化
+- 流式响应显示
+- 异步API调用
+- 消息分页加载
+
+## 开发调试
+
+### 调试技巧
+```python
+# 显示会话状态（开发时）
+st.write(st.session_state)
+
+# 添加调试信息
+st.write(f"当前历史长度: {len(st.session_state.conversation_history)}")
+```
+
+### 热重载
+Streamlit支持代码修改后自动重载，便于开发调试。
