@@ -128,8 +128,8 @@ class ApplicationLauncher:
             self.logger.info("🌐 启动Web界面 (Streamlit)...")
             
             # 导入Web界面
-            # 使用完整的模块路径
-            from src.ui import run_streamlit_interface
+            # 使用绝对导入
+            from ui import run_streamlit_interface
             
             # 应用配置
             if self.config.port:
@@ -156,8 +156,8 @@ class ApplicationLauncher:
             self.logger.info("💻 启动命令行界面...")
             
             # 导入CLI界面
-            # 使用完整的模块路径
-            from src.ui import run_cli_interface
+            # 使用绝对导入
+            from ui import run_cli_interface
             
             # 启动界面
             run_cli_interface()

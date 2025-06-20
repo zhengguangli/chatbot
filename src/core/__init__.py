@@ -3,9 +3,24 @@
 重构后的模块化架构，包含接口、模型、错误处理和配置管理
 """
 
-# 保持向后兼容的原有导出
-from .client import initialize_openai_client
-from .chatbot import get_chatbot_response, manage_conversation_history
+# 向后兼容的导出将通过延迟导入处理
+# from .client import initialize_openai_client
+# from .chatbot import get_chatbot_response, manage_conversation_history
+
+def initialize_openai_client(*args, **kwargs):
+    """延迟导入以避免循环导入"""
+    from .client import initialize_openai_client as _initialize_openai_client
+    return _initialize_openai_client(*args, **kwargs)
+
+def get_chatbot_response(*args, **kwargs):
+    """延迟导入以避免循环导入"""
+    from .chatbot import get_chatbot_response as _get_chatbot_response
+    return _get_chatbot_response(*args, **kwargs)
+
+def manage_conversation_history(*args, **kwargs):
+    """延迟导入以避免循环导入"""
+    from .chatbot import manage_conversation_history as _manage_conversation_history
+    return _manage_conversation_history(*args, **kwargs)
 
 # 新架构组件导出
 from .models import (
@@ -33,14 +48,6 @@ from .errors import (
     global_error_handler, global_retry_handler
 )
 
-from .config import (
-    # 配置管理
-    ConfigManager, ConfigItem, ConfigFormat, ConfigSource,
-    DEFAULT_CONFIG, SENSITIVE_KEYS,
-    # 全局实例
-    global_config_manager
-)
-
 # 向后兼容的导出
 __all__ = [
     # 原有API
@@ -54,14 +61,14 @@ __all__ = [
     
     # 枚举类型
     "UserRole", "MessageRole", "SessionStatus", "ModelProvider",
-    "ErrorCategory", "ErrorLevel", "ErrorCode", "ConfigFormat", "ConfigSource",
+    "ErrorCategory", "ErrorLevel", "ErrorCode",
     
     # 异常类
     "ChatBotError", "NetworkError", "APIError", "ValidationError",
     "BusinessError", "SystemError", "ConfigError",
     
     # 管理器和处理器
-    "ConfigManager", "ErrorHandler", "RetryHandler",
+    "ErrorHandler", "RetryHandler",
     
     # 工厂函数
     "create_default_user", "create_new_session",
@@ -70,8 +77,8 @@ __all__ = [
     "create_business_error", "create_system_error", "create_config_error",
     
     # 全局实例
-    "global_config_manager", "global_error_handler", "global_retry_handler",
+    "global_error_handler", "global_retry_handler",
     
     # 配置和常量
-    "DEFAULT_CONFIG", "SENSITIVE_KEYS", "ErrorContext", "ConfigItem", "RetryConfig"
+    "ErrorContext", "RetryConfig"
 ]

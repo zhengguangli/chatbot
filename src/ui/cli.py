@@ -77,7 +77,8 @@ def run_cli_interface():
 
     # 环境检查（使用兼容性包装器）
     print("🔍 正在检查环境...")
-    env_issues, env_warnings = check_environment()
+    import asyncio
+    env_issues, env_warnings = asyncio.run(check_environment())
     
     if env_issues:
         print("❌ 环境配置问题：")
@@ -94,7 +95,7 @@ def run_cli_interface():
 
     # 初始化客户端（使用兼容性包装器）
     print("🔧 正在初始化AI服务...")
-    client = initialize_openai_client()
+    client = asyncio.run(initialize_openai_client())
     if not client:
         print("❌ AI服务初始化失败")
         return
@@ -156,7 +157,7 @@ def run_cli_interface():
             print("🤖 AI正在思考...")
             
             try:
-                response = get_chatbot_response(client, user_input, conversation_history)
+                response = asyncio.run(get_chatbot_response(client, user_input, conversation_history))
                 
                 # 检查响应是否是错误消息
                 if response.startswith("抱歉，发生了错误：") or response.startswith("获取响应失败:"):
@@ -210,7 +211,8 @@ def run_enhanced_cli_interface():
             return
             
         elif command in ["--status", "status"]:
-            client = initialize_openai_client()
+            import asyncio
+            client = asyncio.run(initialize_openai_client())
             print_status(client)
             return
     

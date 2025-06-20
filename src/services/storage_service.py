@@ -7,17 +7,17 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, cast
 from datetime import datetime
 import logging
 import asyncio
 from dataclasses import asdict
 
-from src.interfaces.storage_service import (
+from contracts.storage_service import (
     IStorageService, StorageConfig, StorageBackend, 
     QueryOptions, QueryFilter
 )
-from src.core.errors import (
+from core.errors import (
     SystemError, ConfigError, create_system_error, 
     ErrorCode, ErrorContext
 )
@@ -181,10 +181,32 @@ class FileStorageService(IStorageService):
             
             results = list(self.collections[collection].values())
             
-            # 应用分页
-            start = options.offset if options else 0
-            end = start + options.limit if options and options.limit else len(results)
-            results = results[start:end]
+            if options:
+                # 应用过滤器
+                if options.filters:
+                    for f in options.filters:
+                        if f.operator == "eq":
+                            results = [item for item in results if item.get(f.field) == f.value]
+                        # 可以根据需要添加其他操作符 (ne, gt, lt, etc.)
+                
+                # 应用排序
+                if options.sort_by:
+                    try:
+                        results.sort(
+                            key=lambda x: x.get(options.sort_by, 0), 
+                            reverse=options.sort_order == "desc"
+                        )
+                    except TypeError:
+                        # 处理混合类型排序问题
+                        results.sort(
+                            key=lambda x: str(x.get(options.sort_by, '')),
+                            reverse=options.sort_order == "desc"
+                        )
+
+                # 应用分页
+                start = options.offset if options.offset else 0
+                end = start + options.limit if options.limit else len(results)
+                results = results[start:end]
             
             # 清理元数据
             return [{k: v for k, v in item.items() if not k.startswith('_')} for item in results]
@@ -359,7 +381,8 @@ class FileStorageService(IStorageService):
             
             for collection in collections_to_backup:
                 if collection in self.collections:
-                    source_file = self.data_dir / f"{collection}.json"
+                    data_dir = cast(Path, self.data_dir)
+                    source_file = data_dir / f"{collection}.json"
                     target_file = backup_dir / f"{collection}.json"
                     
                     if source_file.exists():
@@ -397,8 +420,9 @@ class FileStorageService(IStorageService):
             ]
             
             for collection in collections_to_restore:
+                data_dir = cast(Path, self.data_dir)
                 backup_file = backup_dir / f"{collection}.json"
-                target_file = self.data_dir / f"{collection}.json"
+                target_file = data_dir / f"{collection}.json"
                 
                 if backup_file.exists():
                     shutil.copy2(backup_file, target_file)
@@ -467,7 +491,8 @@ class FileStorageService(IStorageService):
         if not self.data_dir or not self.data_dir.exists():
             return
         
-        for file_path in self.data_dir.glob("*.json"):
+        data_dir = cast(Path, self.data_dir)
+        for file_path in data_dir.glob("*.json"):
             collection_name = file_path.stem
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -481,11 +506,12 @@ class FileStorageService(IStorageService):
     
     async def _save_collection(self, collection: str):
         """保存集合到文件"""
+        if not self.data_dir:
+            raise SystemError("数据目录未初始化", ErrorCode.SYSTEM_INTERNAL_ERROR)
+
         try:
-            if not self.data_dir:
-                raise SystemError("数据目录未初始化", ErrorCode.SYSTEM_INTERNAL_ERROR)
-            
-            file_path = self.data_dir / f"{collection}.json"
+            data_dir = cast(Path, self.data_dir)
+            file_path = data_dir / f"{collection}.json"
             
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(

@@ -34,6 +34,19 @@ class IModelProvider(ABC):
     """
     
     @abstractmethod
+    async def initialize(self, config: Dict[str, Any]) -> bool:
+        """
+        初始化提供者
+        
+        Args:
+            config: 提供者特定的配置
+            
+        Returns:
+            bool: 初始化是否成功
+        """
+        pass
+    
+    @abstractmethod
     async def generate_response(
         self, 
         messages: List[Dict[str, str]],

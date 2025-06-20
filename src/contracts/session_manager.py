@@ -4,33 +4,8 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-from datetime import datetime
-from uuid import UUID
 
-
-@dataclass
-class ChatSession:
-    """聊天会话数据模型"""
-    session_id: str
-    user_id: str
-    title: str
-    created_at: datetime
-    updated_at: datetime
-    model_config: Dict[str, Any]
-    metadata: Dict[str, Any]
-    is_active: bool = True
-
-
-@dataclass
-class Message:
-    """消息数据模型"""
-    message_id: str
-    session_id: str
-    role: str  # "user", "assistant", "system"
-    content: str
-    timestamp: datetime
-    metadata: Dict[str, Any]
+from core.models import ChatSession, Message
 
 
 class ISessionManager(ABC):

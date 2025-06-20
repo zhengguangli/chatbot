@@ -7,14 +7,12 @@ import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 import logging
 import uuid
-import threading
-import concurrent.futures
 
-from src.services import ServiceContainer, ServiceConfig
-from src.interfaces.model_provider import ModelConfig
-from src.interfaces.message_handler import MessageContext
-from src.core.models import User, create_default_user
-from src.core.errors import ChatBotError
+from services.service_container import ServiceContainer, ServiceConfig
+from contracts.model_provider import ModelConfig
+from contracts.message_handler import MessageContext
+from core.models import User, create_default_user
+from core.errors import ChatBotError
 
 
 class UIAdapter:
@@ -30,43 +28,24 @@ class UIAdapter:
         self.current_user: Optional[User] = None
         self.current_session_id: Optional[str] = None
         self._initialized = False
-        # 添加异步锁，防止并发操作引起的事件循环问题
-        self._lock = None
-        # 为不同线程创建唯一事件循环ID映射
-        self._thread_loops = {}
     
     async def initialize(self) -> bool:
         """初始化适配器和服务容器"""
+        if self._initialized:
+            return True
+        
         try:
-            # 如果已初始化，直接返回成功
-            if self._initialized:
-                return True
-            
-            # 确保有可用的事件循环
-            try:
-                asyncio.get_event_loop()
-            except RuntimeError:
-                # 创建新的事件循环
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                self.logger.info(f"为线程 '{threading.current_thread().name}' 创建了新的事件循环")
-            
-            # 创建服务配置
             config = ServiceConfig(
                 storage_path="./data",
                 openai_api_key=self.openai_api_key,
                 log_level="INFO"
             )
             
-            # 创建和初始化服务容器
             self.container = ServiceContainer(config)
             success = await self.container.initialize()
             
             if success:
-                # 创建默认用户
                 self.current_user = create_default_user()
-                
-                # 创建默认会话
                 session_manager = self.container.get_session_manager()
                 if session_manager:
                     session = await session_manager.create_session(
@@ -82,7 +61,7 @@ class UIAdapter:
             return False
             
         except Exception as e:
-            self.logger.error(f"UI适配器初始化失败: {e}")
+            self.logger.error(f"UI适配器初始化失败: {e}", exc_info=True)
             return False
     
     async def get_chatbot_response(
@@ -90,114 +69,72 @@ class UIAdapter:
         user_input: str,
         conversation_history: List[Dict[str, str]]
     ) -> str:
-        """
-        获取聊天机器人响应
-        兼容原有接口，内部使用新服务架构
+        """获取聊天机器人响应"""
+        if not self._initialized:
+            await self.initialize()
+
+        assert self.container is not None, "服务容器未初始化"
         
-        Args:
-            user_input: 用户输入
-            conversation_history: 对话历史
-            
-        Returns:
-            str: AI响应内容
-        """
-        try:
-            # 确保有可用的事件循环
-            try:
-                asyncio.get_event_loop()
-            except RuntimeError:
-                # 创建新的事件循环
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                self.logger.info(f"为线程 '{threading.current_thread().name}' 创建了新的事件循环")
-                
-            # 确保初始化
-            if not self._initialized:
-                await self.initialize()
-            
-            if not self.container:
-                return "服务容器未初始化"
-            
-            # 获取服务
-            message_handler = self.container.get_message_handler()
-            provider_registry = self.container.get_model_provider_registry()
-            session_manager = self.container.get_session_manager()
-            
-            if not all([message_handler, provider_registry, session_manager]):
-                return "关键服务未就绪"
-            
-            # 处理用户消息
-            context = MessageContext(
-                session_id=self.current_session_id or "",
-                user_id=self.current_user.user_id if self.current_user else "default",
-                conversation_history=conversation_history,
-                system_settings={},
-                user_preferences={}
+        message_handler = self.container.get_message_handler()
+        provider_registry = self.container.get_model_provider_registry()
+        session_manager = self.container.get_session_manager()
+
+        assert message_handler is not None
+        assert provider_registry is not None
+        assert session_manager is not None
+
+        context = MessageContext(
+            session_id=self.current_session_id or "",
+            user_id=self.current_user.user_id if self.current_user else "default",
+            conversation_history=conversation_history,
+            system_settings={},
+            user_preferences={}
+        )
+
+        processed_message = await message_handler.process_user_message(
+            user_input, context
+        )
+
+        if not processed_message.is_valid:
+            return f"消息处理失败: {processed_message.error_message}"
+
+        if self.current_session_id:
+            await session_manager.add_message(
+                self.current_session_id,
+                "user",
+                processed_message.content
             )
-            
-            if not message_handler:
-                return "消息处理器不可用"
-            
-            processed_message = await message_handler.process_user_message(
-                user_input, context
+
+        ai_messages = await message_handler.prepare_context_for_ai(
+            processed_message.content,
+            context
+        )
+
+        provider = provider_registry.get_provider()
+        if not provider:
+            return "AI服务暂时不可用，请稍后重试。"
+
+        model_config = ModelConfig(
+            model_name="qwen3",
+            provider="openai"
+        )
+
+        response = await provider.generate_response(ai_messages, model_config)
+
+        formatted_response = await message_handler.format_response(
+            response.content,
+            context
+        )
+
+        if self.current_session_id:
+            await session_manager.add_message(
+                self.current_session_id,
+                "assistant",
+                formatted_response
             )
-            
-            if not processed_message.is_valid:
-                return f"消息处理失败: {processed_message.error_message}"
-            
-            # 添加消息到会话
-            if self.current_session_id and session_manager:
-                await session_manager.add_message(
-                    self.current_session_id,
-                    "user",
-                    processed_message.content
-                )
-            
-            # 准备AI上下文
-            ai_messages = await message_handler.prepare_context_for_ai(
-                processed_message.content,
-                context
-            )
-            
-            # 获取AI提供者
-            if not provider_registry:
-                return "AI提供者注册表不可用"
-            
-            provider = provider_registry.get_provider()
-            if not provider:
-                return "AI服务暂时不可用，请稍后重试。"
-            
-            # 创建模型配置
-            model_config = ModelConfig(
-                model_name="qwen3",
-                provider="openai",
-                temperature=0.7,
-                max_tokens=2000
-            )
-            
-            # 生成AI响应
-            response = await provider.generate_response(ai_messages, model_config)
-            
-            # 格式化响应
-            formatted_response = await message_handler.format_response(
-                response.content,
-                context
-            )
-            
-            # 添加AI响应到会话
-            if self.current_session_id and session_manager:
-                await session_manager.add_message(
-                    self.current_session_id,
-                    "assistant",
-                    formatted_response
-                )
-            
-            return formatted_response
-            
-        except Exception as e:
-            self.logger.error(f"获取AI响应失败: {e}")
-            return f"抱歉，发生了错误：{str(e)}"
-    
+        
+        return formatted_response
+
     def manage_conversation_history(
         self,
         conversation_history: List[Dict[str, str]],
@@ -205,257 +142,35 @@ class UIAdapter:
         response: str,
         max_history: int = 20
     ) -> List[Dict[str, str]]:
-        """
-        管理对话历史
-        兼容原有接口
+        """管理对话历史"""
+        new_history = conversation_history.copy()
+        new_history.append({"role": "user", "content": user_input})
+        new_history.append({"role": "assistant", "content": response})
+
+        if len(new_history) > max_history:
+            return new_history[-max_history:]
         
-        Args:
-            conversation_history: 当前对话历史
-            user_input: 用户输入
-            response: AI响应
-            max_history: 最大历史条数
-            
-        Returns:
-            List[Dict[str, str]]: 更新后的对话历史
-        """
-        try:
-            # 添加新的对话
-            new_history = conversation_history.copy()
-            new_history.append({"role": "user", "content": user_input})
-            new_history.append({"role": "assistant", "content": response})
-            
-            # 保持历史记录在限制范围内
-            if len(new_history) > max_history:
-                # 保留最近的对话
-                new_history = new_history[-max_history:]
-            
-            return new_history
-            
-        except Exception as e:
-            self.logger.error(f"管理对话历史失败: {e}")
-            return conversation_history
-    
-    async def check_environment(self) -> Tuple[List[str], List[str]]:
-        """
-        检查环境状态
-        兼容原有接口
-        
-        Returns:
-            Tuple[List[str], List[str]]: (问题列表, 警告列表)
-        """
-        issues = []
-        warnings = []
-        
-        try:
-            if not self._initialized:
-                await self.initialize()
-            
-            if not self.container:
-                issues.append("服务容器初始化失败")
-                return issues, warnings
-            
-            # 检查服务状态
-            status = self.container.get_service_status()
-            
-            for service_name, is_ok in status.items():
-                if not is_ok:
-                    issues.append(f"{service_name} 服务不可用")
-            
-            # 检查OpenAI配置
-            if not self.openai_api_key:
-                warnings.append("OpenAI API密钥未设置")
-            
-            # 检查数据目录
-            storage_service = self.container.get_storage_service()
-            if storage_service:
-                try:
-                    stats = await storage_service.get_collection_stats("sessions")
-                    if not stats.get("exists"):
-                        warnings.append("会话数据集合不存在，将自动创建")
-                except Exception as e:
-                    warnings.append(f"存储服务检查失败: {e}")
-            
-        except Exception as e:
-            issues.append(f"环境检查失败: {e}")
-        
-        return issues, warnings
-    
-    async def create_new_session(self, title: Optional[str] = None) -> bool:
-        """
-        创建新会话
-        
-        Args:
-            title: 会话标题
-            
-        Returns:
-            bool: 创建是否成功
-        """
-        try:
-            if not self._initialized:
-                await self.initialize()
-            
-            if not self.container:
-                return False
-                
-            session_manager = self.container.get_session_manager()
-            if not session_manager or not self.current_user:
-                return False
-            
-            session = await session_manager.create_session(
-                self.current_user.user_id,
-                title or f"新会话 - {uuid.uuid4().hex[:8]}"
-            )
-            
-            self.current_session_id = session.session_id
-            self.logger.info(f"创建新会话: {session.session_id}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"创建新会话失败: {e}")
-            return False
-    
-    async def get_session_list(self) -> List[Dict[str, Any]]:
-        """
-        获取用户会话列表
-        
-        Returns:
-            List[Dict[str, Any]]: 会话信息列表
-        """
-        try:
-            if not self._initialized:
-                await self.initialize()
-            
-            if not self.container:
-                return []
-                
-            session_manager = self.container.get_session_manager()
-            if not session_manager or not self.current_user:
-                return []
-            
-            sessions = await session_manager.get_user_sessions(
-                self.current_user.user_id
-            )
-            
-            return [
-                {
-                    "session_id": session.session_id,
-                    "title": session.title,
-                    "created_at": session.created_at.isoformat(),
-                    "updated_at": session.updated_at.isoformat(),
-                    "message_count": getattr(session, 'message_count', 0)
-                }
-                for session in sessions
-            ]
-            
-        except Exception as e:
-            self.logger.error(f"获取会话列表失败: {e}")
-            return []
-    
-    async def switch_session(self, session_id: str) -> bool:
-        """
-        切换到指定会话
-        
-        Args:
-            session_id: 会话ID
-            
-        Returns:
-            bool: 切换是否成功
-        """
-        try:
-            if not self._initialized:
-                await self.initialize()
-            
-            if not self.container:
-                return False
-                
-            session_manager = self.container.get_session_manager()
-            if not session_manager:
-                return False
-            
-            session = await session_manager.get_session(session_id)
-            if session:
-                self.current_session_id = session_id
-                self.logger.info(f"切换到会话: {session_id}")
-                return True
-            
-            return False
-            
-        except Exception as e:
-            self.logger.error(f"切换会话失败: {e}")
-            return False
-    
+        return new_history
+
     async def close(self):
         """关闭适配器和服务"""
-        try:
-            if self.container:
-                await self.container.shutdown()
-            self._initialized = False
-            self.logger.info("UI适配器已关闭")
-            
-        except Exception as e:
-            self.logger.error(f"关闭UI适配器失败: {e}")
+        if self.container:
+            await self.container.shutdown()
+        self._initialized = False
+        self.logger.info("UI适配器已关闭")
 
 
 # 全局适配器实例
 _global_adapter: Optional[UIAdapter] = None
 
-
-def get_global_adapter(openai_api_key: Optional[str] = None) -> UIAdapter:
-    """获取全局UI适配器实例"""
+async def get_global_adapter(openai_api_key: Optional[str] = None) -> UIAdapter:
+    """获取并初始化全局UI适配器实例"""
     global _global_adapter
     
     if _global_adapter is None:
         _global_adapter = UIAdapter(openai_api_key)
     
-    return _global_adapter
+    if not _global_adapter._initialized:
+        await _global_adapter.initialize()
 
-
-def run_async_safely(coro):
-    """安全运行异步函数"""
-    try:
-        # 获取当前线程信息
-        import threading
-        current_thread = threading.current_thread()
-        thread_name = current_thread.name
-        
-        # 检测是否是Streamlit线程
-        is_streamlit_thread = 'streamlit' in thread_name.lower() or 'scriptrunner' in thread_name.lower()
-        
-        # 尝试获取或创建事件循环
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            # 如果没有当前事件循环，创建一个新的
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            logging.getLogger(__name__).info(f"为线程 '{thread_name}' 创建了新的事件循环")
-        
-        # 针对Streamlit线程的特殊处理
-        if is_streamlit_thread:
-            # 创建新线程运行异步代码
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(lambda: asyncio.run(coro))
-                return future.result(timeout=60)  # 设置超时，避免永久阻塞
-        
-        # 检查是否在主线程中
-        if threading.current_thread() is threading.main_thread():
-            if loop.is_running():
-                # 如果在主线程且循环正在运行（例如在Jupyter中）
-                # 创建一个Future来在现有循环中运行
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-                return future.result()
-            else:
-                # 主线程中但循环没有运行，直接运行到完成
-                return loop.run_until_complete(coro)
-        else:
-            # 在非主线程中，创建新的事件循环
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            try:
-                return new_loop.run_until_complete(coro)
-            finally:
-                new_loop.close()
-                
-    except Exception as e:
-        logging.getLogger(__name__).error(f"运行异步函数失败: {e}")
-        raise e 
+    return _global_adapter 

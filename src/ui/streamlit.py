@@ -77,7 +77,10 @@ def run_streamlit_interface():
     if "client" not in st.session_state:
         try:
             with st.spinner("正在初始化AI服务..."):
-                client = initialize_openai_client()
+                # 使用事件循环运行异步初始化
+                import asyncio
+                loop = asyncio.get_event_loop()
+                client = loop.run_until_complete(initialize_openai_client())
                 if not client:
                     st.error("❌ AI服务初始化失败，请检查配置")
                     st.info("请确保设置了OPENAI_API_KEY环境变量")
@@ -123,11 +126,14 @@ def run_streamlit_interface():
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("🤔 AI正在思考..."):
                 try:
-                    response = get_chatbot_response(
+                    # 使用当前线程的事件循环运行异步函数
+                    import asyncio
+                    loop = asyncio.get_event_loop()
+                    response = loop.run_until_complete(get_chatbot_response(
                         st.session_state.client,
                         user_input,
                         st.session_state.conversation_history
-                    )
+                    ))
                     
                     if response.startswith("抱歉，发生了错误："):
                         st.error(response)

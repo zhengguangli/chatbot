@@ -66,11 +66,11 @@ run: web
 
 web:
 	@echo "🌐 启动Web界面..."
-	uv run streamlit run main.py
+	uv run streamlit run src/main.py
 
 cli:
 	@echo "💻 启动命令行界面..."
-	uv run python cli.py
+	uv run python src/cli.py
 
 # 配置管理
 env:

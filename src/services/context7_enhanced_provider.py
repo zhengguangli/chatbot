@@ -8,11 +8,11 @@ import logging
 from typing import Dict, List, Optional, Any
 import asyncio
 
-from src.interfaces.model_provider import (
+from contracts.model_provider import (
     IModelProvider, ModelConfig, ModelResponse
 )
-from src.services.model_providers import OpenAIProvider
-from src.core.errors import APIError, ErrorCode
+from .model_providers import OpenAIProvider
+from core.errors import APIError, ErrorCode
 
 
 class Context7EnhancedProvider(OpenAIProvider):

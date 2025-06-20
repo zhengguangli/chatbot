@@ -2,7 +2,6 @@
 配置管理模块
 """
 
-from .environment import check_environment, get_openai_config
-from .settings import *
+from .settings import global_config_manager, DEFAULT_CONFIG
 
-__all__ = ["check_environment", "get_openai_config"]
+__all__ = ["global_config_manager", "DEFAULT_CONFIG"]

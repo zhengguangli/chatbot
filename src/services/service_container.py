@@ -8,11 +8,10 @@ import logging
 from dataclasses import dataclass
 import os
 
-from src.interfaces.storage_service import IStorageService, StorageConfig, StorageBackend
-from src.interfaces.session_manager import ISessionManager
-from src.interfaces.message_handler import IMessageHandler
-from src.interfaces.model_provider import IModelProvider
-from src.interfaces.config_manager import IConfigManager
+from contracts.storage_service import IStorageService, StorageConfig, StorageBackend
+from contracts.session_manager import ISessionManager
+from contracts.message_handler import IMessageHandler
+from contracts.model_provider import IModelProvider
 
 from .storage_service import FileStorageService
 from .session_manager import SessionManager

@@ -10,10 +10,10 @@ import asyncio
 import aiohttp
 import json
 
-from src.interfaces.model_provider import (
+from contracts.model_provider import (
     IModelProvider, ModelConfig, ModelResponse
 )
-from src.core.errors import APIError, ErrorCode
+from core.errors import APIError, ErrorCode
 
 
 class OpenAIProvider(IModelProvider):

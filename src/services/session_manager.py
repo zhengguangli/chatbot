@@ -6,10 +6,10 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import logging
 
-from src.interfaces.session_manager import ISessionManager, ChatSession, Message
-from src.interfaces.storage_service import IStorageService
-from src.core.models import create_new_session
-from src.core.errors import ValidationError, ErrorCode
+from contracts.session_manager import ISessionManager
+from core.models import ChatSession, Message, create_new_session
+from contracts.storage_service import IStorageService, QueryOptions, QueryFilter
+from core.errors import ValidationError, ErrorCode
 
 
 class SessionManager(ISessionManager):
@@ -73,8 +73,15 @@ class SessionManager(ISessionManager):
         offset: int = 0
     ) -> List[ChatSession]:
         """获取用户会话列表"""
-        # 简化实现
-        return []
+        options = QueryOptions(
+            filters=[QueryFilter(field="user_id", operator="eq", value=user_id)],
+            sort_by="created_at",
+            sort_order="desc",
+            limit=limit,
+            offset=offset
+        )
+        sessions_data = await self.storage.query_data("sessions", options)
+        return [ChatSession.from_dict(data) for data in sessions_data]
     
     async def add_message(
         self,
@@ -84,7 +91,7 @@ class SessionManager(ISessionManager):
         metadata: Optional[Dict[str, Any]] = None
     ) -> Message:
         """添加消息"""
-        from ..core.models import create_user_message, create_assistant_message
+        from core.models import create_user_message, create_assistant_message
         
         if role == "user":
             message = create_user_message(session_id, content)
@@ -103,8 +110,15 @@ class SessionManager(ISessionManager):
         offset: int = 0
     ) -> List[Message]:
         """获取会话消息"""
-        # 简化实现
-        return []
+        options = QueryOptions(
+            filters=[QueryFilter(field="session_id", operator="eq", value=session_id)],
+            sort_by="timestamp",
+            sort_order="asc",
+            limit=limit,
+            offset=offset
+        )
+        messages_data = await self.storage.query_data("messages", options)
+        return [Message.from_dict(data) for data in messages_data]
     
     async def clear_session_messages(self, session_id: str) -> bool:
         """清空会话消息"""

@@ -1,16 +1,8 @@
 """
 聊天机器人核心逻辑模块
 """
-
-from ..config.settings import (
-    DEFAULT_MODEL,
-    DEFAULT_MAX_TOKENS,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_TIMEOUT,
-    SYSTEM_MESSAGE,
-    MAX_CONVERSATION_HISTORY,
-)
-from ..utils.errors import handle_api_error
+from config import global_config_manager
+from utils.errors import handle_api_error
 
 
 def get_chatbot_response(client, user_input, conversation_history):
@@ -22,11 +14,18 @@ def get_chatbot_response(client, user_input, conversation_history):
         return "请输入有效的问题"
 
     try:
+        # 从配置管理器获取参数
+        model_name = global_config_manager.get_config_value("model.model_name")
+        max_tokens = global_config_manager.get_config_value("model.max_tokens")
+        temperature = global_config_manager.get_config_value("model.temperature")
+        timeout = global_config_manager.get_config_value("model.timeout")
+        system_message = global_config_manager.get_config_value("conversation.system_message")
+
         # 构建消息历史
         messages = [
             {
                 "role": "system",
-                "content": SYSTEM_MESSAGE,
+                "content": system_message,
             },
         ]
 
@@ -40,11 +39,11 @@ def get_chatbot_response(client, user_input, conversation_history):
 
         # 调用OpenAI API
         response = client.chat.completions.create(
-            model=DEFAULT_MODEL,
+            model=model_name,
             messages=messages,
-            max_tokens=DEFAULT_MAX_TOKENS,
-            temperature=DEFAULT_TEMPERATURE,
-            timeout=DEFAULT_TIMEOUT,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            timeout=timeout,
         )
 
         if response.choices and len(response.choices) > 0:
@@ -56,10 +55,9 @@ def get_chatbot_response(client, user_input, conversation_history):
         return handle_api_error(e)
 
 
-def manage_conversation_history(history, new_user_msg, new_bot_msg, max_length=None):
+def manage_conversation_history(history, new_user_msg, new_bot_msg):
     """管理对话历史"""
-    if max_length is None:
-        max_length = MAX_CONVERSATION_HISTORY
+    max_length = global_config_manager.get_config_value("conversation.max_history")
 
     history.append({"role": "user", "content": new_user_msg})
     history.append({"role": "assistant", "content": new_bot_msg})
