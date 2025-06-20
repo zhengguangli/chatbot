@@ -1,58 +1,58 @@
 # Memory Bank系统指南
 
 ## 概述
-Memory Bank是一个结构化的项目上下文管理系统，用于维护项目信息、任务跟踪和开发进度。
+Memory Bank是一个持久化上下文管理系统，用于维护项目状态和开发过程中的各种上下文信息。
 
-## 核心文件
+## 核心文件位置
+**重要**: 所有Memory Bank文件都位于 [memory-bank/](mdc:memory-bank/) 目录中。
 
-### 基础文档
-- [memory-bank/projectbrief.md](mdc:memory-bank/projectbrief.md) - 项目概述、目标和技术要求
-- [memory-bank/productContext.md](mdc:memory-bank/productContext.md) - 用户群体、使用场景和产品特色
-- [memory-bank/techContext.md](mdc:memory-bank/techContext.md) - 技术栈、架构模式和开发环境
+### 主要文件结构
+- [memory-bank/projectbrief.md](mdc:memory-bank/projectbrief.md) - 项目基础信息和目标
+- [memory-bank/productContext.md](mdc:memory-bank/productContext.md) - 产品上下文和需求
+- [memory-bank/techContext.md](mdc:memory-bank/techContext.md) - 技术上下文和约束
+- [memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md) - 系统模式和最佳实践
+- [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) - 当前活跃上下文
+- [memory-bank/progress.md](mdc:memory-bank/progress.md) - 实施进度跟踪
+- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) - 任务跟踪和待办事项
+- [memory-bank/style-guide.md](mdc:memory-bank/style-guide.md) - 代码风格指南
 
-### 动态文档
-- [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) - 当前活动状态和关注重点
-- [memory-bank/progress.md](mdc:memory-bank/progress.md) - 项目进度和完成状态
-- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) - 任务跟踪和待办事项（单一真相来源）
+### 创意阶段文档
+- [memory-bank/creative-*.md](mdc:memory-bank/) - 创意阶段的设计文档
 
-### 指导文档
-- [memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md) - 系统架构和设计模式
-- [memory-bank/style-guide.md](mdc:memory-bank/style-guide.md) - 代码风格和开发规范
+### 反思和归档
+- `memory-bank/reflection/` - 任务反思文档
+- `memory-bank/archive/` - 已完成任务的归档
 
-## 开发模式
+## 文件操作规则
 
-### VAN模式 (初始化)
-- 平台检测和环境验证
-- Memory Bank结构创建
-- 复杂度级别判断
-- 参考：[custom_modes/van_instructions.md](mdc:custom_modes/van_instructions.md)
+### 1. 路径验证
+- 在对Memory Bank文件进行任何 `create_file` 或 `edit_file` 操作前，必须验证路径以 `memory-bank/` 开头
+- 如果尝试在项目根目录创建核心文件（如 `tasks.md`），确保创建在 `memory-bank/tasks.md`
 
-### PLAN模式 (规划)
-- 详细实现计划制定
-- 组件识别和依赖分析
-- 创意阶段需求标识
-- 参考：[custom_modes/plan_instructions.md](mdc:custom_modes/plan_instructions.md)
+### 2. 任务跟踪
+- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) 是活跃任务的临时工作文档
+- 包含步骤、清单和组件列表的详细信息
+- 任务完成后，内容合并到归档文档中，然后清空文件
 
-### CREATIVE模式 (创意设计)
-- 架构和算法设计
-- UI/UX设计决策
-- 技术选型
-- 参考：[custom_modes/creative_instructions.md](mdc:custom_modes/creative_instructions.md)
+### 3. 上下文继承
+基础上下文流动：
+```
+projectbrief.md → productContext.md, systemPatterns.md, techContext.md
+                ↓
+            activeContext.md → progress.md, tasks.md
+```
 
-### IMPLEMENT模式 (实现)
-- 代码实现
-- 测试编写
-- 文档更新
-- 参考：[custom_modes/implement_instructions.md](mdc:custom_modes/implement_instructions.md)
+## 使用模式
 
-### REFLECT+ARCHIVE模式 (反思归档)
-- 实现回顾和总结
-- 文档归档
-- 下一阶段准备
-- 参考：[custom_modes/reflect_archive_instructions.md](mdc:custom_modes/reflect_archive_instructions.md)
+### 开发阶段
+1. **VAN模式**: 验证和初始化，检查Memory Bank状态
+2. **PLAN模式**: 规划阶段，更新计划相关文档
+3. **CREATIVE模式**: 创意设计，生成设计文档
+4. **IMPLEMENT模式**: 实施阶段，跟踪进度
+5. **QA模式**: 质量保证，验证完成状态
 
-## 使用原则
-1. **tasks.md是单一真相来源** - 所有任务状态以此为准
-2. **保持文档同步** - 定期更新所有相关文档
-3. **遵循开发模式** - 按照VAN→PLAN→CREATIVE→IMPLEMENT→REFLECT+ARCHIVE流程
-4. **维护上下文连续性** - 在activeContext.md中记录当前状态
+### 最佳实践
+- 始终保持 [memory-bank/tasks.md](mdc:memory-bank/tasks.md) 为当前任务的单一真实来源
+- 定期更新 [memory-bank/progress.md](mdc:memory-bank/progress.md) 反映实施状态
+- 使用 [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) 维护当前焦点
+- 完成任务后及时归档到 `memory-bank/archive/` 目录

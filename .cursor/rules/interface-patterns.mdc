@@ -1,0 +1,94 @@
+# 界面模式和入口点指南
+
+## 双界面架构
+项目采用智能双界面设计，支持Web和CLI两种运行模式。
+
+## 入口点系统
+
+### 主入口点 - [main.py](mdc:main.py)
+**智能环境检测入口**，自动选择最佳运行模式：
+
+#### 检测机制
+1. **命令行参数检测**: 检查 `sys.argv[0]` 是否包含 'streamlit'
+2. **环境变量检测**: 检查 `STREAMLIT_SERVER_PORT` 环境变量
+3. **调用堆栈检测**: 检查调用堆栈是否包含streamlit模块
+
+#### 自动切换逻辑
+```python
+if is_streamlit_context():
+    run_streamlit_interface()  # Web模式
+else:
+    run_cli_interface()        # CLI模式
+```
+
+### 专用入口点 - [cli.py](mdc:cli.py)
+**专用CLI入口**，直接启动命令行界面，跳过环境检测。
+
+## 界面实现
+
+### Web界面 - [src/ui/streamlit_app.py](mdc:src/ui/streamlit_app.py)
+**现代化Web聊天界面**：
+- 🎨 美观的聊天界面设计
+- 💬 实时消息展示
+- ⏳ "AI正在思考..." 状态指示器
+- 📱 响应式设计，支持移动设备
+- 🔄 自动会话状态管理
+- ⚠️ 实时错误提示和配置指导
+
+### CLI界面 - [src/ui/cli_app.py](mdc:src/ui/cli_app.py)
+**命令行交互界面**：
+- 📝 简洁的对话界面
+- 🚪 支持退出命令（`quit`、`exit`、`退出`）
+- 🗑️ 支持清空对话历史（`clear`、`清空`）
+- 🔄 连续对话支持
+- ⚠️ 智能环境检查
+- 🛡️ 异常处理（Ctrl+C、EOF等）
+
+## 运行命令
+
+### 推荐方式（Web优先）
+```bash
+# 自动检测，优先Web界面
+uv run streamlit run main.py
+
+# 或使用make命令
+make run
+make web
+```
+
+### CLI模式
+```bash
+# 智能检测，降级到CLI
+uv run python main.py
+
+# 直接CLI
+uv run python cli.py
+make cli
+```
+
+## 共享组件
+
+### 核心逻辑共享
+两种界面共享相同的核心组件：
+- [src/core/chatbot.py](mdc:src/core/chatbot.py) - 聊天逻辑
+- [src/core/client.py](mdc:src/core/client.py) - OpenAI客户端
+- [src/config/](mdc:src/config/) - 配置管理
+- [src/utils/](mdc:src/utils/) - 工具函数
+
+### 环境检查
+统一的环境检查在 [src/config/environment.py](mdc:src/config/environment.py)：
+- Python版本验证
+- API密钥检查
+- 网络连接测试
+
+## 最佳实践
+
+### 开发测试
+- 优先使用Web界面进行功能测试
+- CLI界面作为备用和脚本化场景
+- 确保两种界面功能一致性
+
+### 部署考虑
+- 生产环境优先部署Web界面
+- CLI界面适用于服务器管理和脚本集成
+- 确保两种模式的错误处理一致

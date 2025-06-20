@@ -1,5 +1,106 @@
----
-description:
-globs:
-alwaysApply: false
----
+# 故障排除和常见任务指南
+
+## 环境问题
+
+### Python版本检查
+项目要求 Python >= 3.9。检查方法：
+```bash
+python --version
+uv python list
+```
+
+### API密钥配置
+**最常见问题**：未设置OpenAI API密钥
+
+#### 解决步骤
+1. 复制配置模板：`cp .env.example .env`
+2. 编辑 `.env` 文件，设置 `OPENAI_API_KEY=your_key_here`
+3. 或使用环境变量：`export OPENAI_API_KEY=your_key_here`
+
+#### 验证配置
+程序启动时会自动检查：
+- [src/config/environment.py](mdc:src/config/environment.py) 提供详细的环境验证
+- 显示具体的配置问题和解决建议
+
+### UV包管理器问题
+如果UV未安装：
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+## 运行时问题
+
+### Streamlit环境检测警告
+如果出现环境检测相关警告，原因可能是：
+1. 直接导入streamlit模块导致的检测干扰
+2. 解决方案在 [main.py](mdc:main.py) 的 `is_streamlit_context()` 函数中实现
+
+### API调用问题
+常见API错误类型及处理：
+- **超时错误**: 网络连接问题，检查网络设置
+- **API密钥错误**: 验证密钥格式和有效性
+- **频率限制**: 降低请求频率
+- **配额不足**: 检查OpenAI账户余额
+
+错误处理逻辑在 [src/utils/errors.py](mdc:src/utils/errors.py)
+
+### 依赖问题
+如果依赖安装失败：
+```bash
+# 清理并重新安装
+uv sync --reinstall
+
+# 或手动清理
+make clean
+make install
+```
+
+## 常见开发任务
+
+### 添加新功能
+1. **界面功能**: 在 [src/ui/](mdc:src/ui/) 中修改对应界面文件
+2. **核心逻辑**: 在 [src/core/](mdc:src/core/) 中添加业务逻辑
+3. **配置项**: 在 [src/config/settings.py](mdc:src/config/settings.py) 中添加配置
+4. **工具函数**: 在 [src/utils/](mdc:src/utils/) 中添加通用函数
+
+### 代码质量检查
+```bash
+# 完整的质量检查流程
+make format    # 格式化代码
+make check     # 检查格式
+make test      # 运行测试
+make lint      # 综合检查
+```
+
+### 调试技巧
+1. **启用详细日志**: 修改 [src/config/settings.py](mdc:src/config/settings.py) 中的日志级别
+2. **分步调试**: 使用 `print` 语句或Python调试器
+3. **环境隔离**: 确认在正确的虚拟环境中运行
+
+## Memory Bank维护
+
+### 文件位置验证
+确保所有Memory Bank操作都在正确路径：
+- 正确：`memory-bank/tasks.md`
+- 错误：`tasks.md`（根目录）
+
+### 常见维护任务
+1. **清理过期任务**: 定期归档完成的任务
+2. **更新上下文**: 保持 [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) 当前状态
+3. **同步进度**: 更新 [memory-bank/progress.md](mdc:memory-bank/progress.md)
+
+## 性能优化
+
+### 启动时间优化
+- 模块加载时间约0.66秒
+- 避免不必要的模块导入
+- 使用懒加载机制
+
+### 对话历史管理
+- 默认保持20条对话记录
+- 配置在 [src/config/settings.py](mdc:src/config/settings.py)
+- 可通过 `clear`/`清空` 命令重置

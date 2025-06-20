@@ -1,0 +1,79 @@
+# 自定义模式系统指南
+
+## 概述
+项目包含多个自定义开发模式，用于指导不同阶段的开发工作流程。
+
+## 模式文件位置
+所有自定义模式指令位于 [custom_modes/](mdc:custom_modes/) 目录：
+
+### 核心模式
+- [van_instructions.md](mdc:custom_modes/van_instructions.md) - VAN模式（入口点/初始化）
+- [plan_instructions.md](mdc:custom_modes/plan_instructions.md) - PLAN模式（规划阶段）
+- [creative_instructions.md](mdc:custom_modes/creative_instructions.md) - CREATIVE模式（创意设计）
+- [implement_instructions.md](mdc:custom_modes/implement_instructions.md) - IMPLEMENT模式（实施阶段）
+- [reflect_archive_instructions.md](mdc:custom_modes/reflect_archive_instructions.md) - 反思和归档模式
+
+### 分析文档
+- [mode_switching_analysis.md](mdc:custom_modes/mode_switching_analysis.md) - 模式切换分析
+
+## 模式工作流程
+
+### 1. VAN模式 - 验证和初始化
+- **作用**: 项目入口点，环境检查和初始化
+- **功能**: 
+  - 复杂度评估
+  - 文件验证
+  - 平台检测
+  - QA检查（构建测试、依赖验证、环境验证）
+
+### 2. PLAN模式 - 规划阶段
+- **作用**: 项目规划和架构设计
+- **功能**:
+  - 任务分解
+  - 技术选型
+  - 实施计划制定
+
+### 3. CREATIVE模式 - 创意设计
+- **作用**: UI/UX设计和创意决策
+- **功能**:
+  - 用户界面设计
+  - 交互设计
+  - 视觉设计决策
+
+### 4. IMPLEMENT模式 - 实施阶段
+- **作用**: 代码实现和功能开发
+- **功能**:
+  - 代码编写
+  - 功能实现
+  - 集成测试
+
+### 5. REFLECT & ARCHIVE模式 - 反思归档
+- **作用**: 任务完成后的反思和文档归档
+- **功能**:
+  - 任务反思
+  - 经验总结
+  - 文档归档
+
+## 模式切换规则
+
+### 自动切换流程
+```
+VAN → PLAN → CREATIVE → IMPLEMENT → QA → REFLECT/ARCHIVE
+```
+
+### Level-based切换
+- **Level 1**: VAN → IMPLEMENT（快速修复）
+- **Level 2-4**: VAN → PLAN → CREATIVE → IMPLEMENT（完整流程）
+
+## Memory Bank集成
+每个模式都与Memory Bank系统深度集成：
+- 读取当前项目状态
+- 更新相关文档
+- 维护任务跟踪
+- 保持上下文一致性
+
+## 使用指南
+1. 使用对应的模式命令激活特定工作流程
+2. 每个模式都有详细的视觉流程图
+3. 遵循模式内的检查点和验证步骤
+4. 完成后自动转换到下一个适当的模式

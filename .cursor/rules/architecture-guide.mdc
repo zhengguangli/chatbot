@@ -1,0 +1,56 @@
+# 架构指南
+
+## 模块化架构设计
+
+### 主入口点
+- [main.py](mdc:main.py) - 智能环境检测，自动选择运行模式
+- [cli.py](mdc:cli.py) - 专用CLI入口点
+
+### 核心模块 `/src`
+- [src/__init__.py](mdc:src/__init__.py) - 模块导出和版本定义
+- [src/core/](mdc:src/core/) - 核心业务逻辑层
+  - [chatbot.py](mdc:src/core/chatbot.py) - 聊天机器人核心逻辑
+  - [client.py](mdc:src/core/client.py) - OpenAI客户端初始化
+- [src/ui/](mdc:src/ui/) - 用户界面层
+  - [streamlit_app.py](mdc:src/ui/streamlit_app.py) - Web界面实现
+  - [cli_app.py](mdc:src/ui/cli_app.py) - CLI界面实现
+- [src/config/](mdc:src/config/) - 配置管理层
+  - [settings.py](mdc:src/config/settings.py) - 应用设置和常量
+  - [environment.py](mdc:src/config/environment.py) - 环境检查和验证
+- [src/utils/](mdc:src/utils/) - 工具函数层
+  - [messages.py](mdc:src/utils/messages.py) - 消息处理工具
+  - [errors.py](mdc:src/utils/errors.py) - 错误处理工具
+
+## 设计原则
+
+### 1. 关注点分离
+- **UI层**: 只负责界面交互，不包含业务逻辑
+- **Core层**: 核心业务逻辑，与界面无关
+- **Config层**: 集中管理配置和环境检查
+- **Utils层**: 可复用的工具函数
+
+### 2. 依赖注入
+- OpenAI客户端通过依赖注入传递
+- 配置通过模块导入获取，避免硬编码
+
+### 3. 错误处理
+- 统一的错误处理机制在 [src/utils/errors.py](mdc:src/utils/errors.py)
+- 分类错误类型：API错误、超时错误、配置错误
+
+### 4. 环境适配
+- 智能检测Streamlit运行环境
+- 自动降级到CLI模式
+- 兼容不同操作系统
+
+## 数据流
+```
+用户输入 → UI层 → Core层 → OpenAI API → Core层 → UI层 → 用户输出
+            ↓       ↓                      ↓       ↓
+        界面逻辑  业务逻辑               响应处理  界面渲染
+```
+
+## 扩展指南
+- 新增界面：在 `src/ui/` 添加新的界面实现
+- 新增功能：在 `src/core/` 添加业务逻辑
+- 新增配置：在 `src/config/settings.py` 添加配置项
+- 新增工具：在 `src/utils/` 添加通用工具函数
