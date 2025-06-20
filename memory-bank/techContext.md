@@ -1,30 +1,48 @@
-# Tech Context - 技术背景
+# Technical Context
 
-## 技术栈
-### 核心依赖
-- **openai (>=1.88.0)** - OpenAI API客户端
-- **langchain (>=0.3.25)** - AI应用开发框架  
-- **streamlit (>=1.46.0)** - Web界面框架
-- **watchdog (>=6.0.0)** - 文件监控
+> **Purpose**: Technical implementation details, dependencies, and environment setup.
 
-### 开发工具
-- **pytest (>=8.4.1)** - 测试框架
-- **black (>=25.1.0)** - 代码格式化工具
-- **UV** - 现代Python包管理器
+## Development Environment
+- **OS**: macOS (Darwin)
+- **Shell**: /usr/local/bin/zsh
+- **Working Directory**: /Users/lizhengguang/Desktop/chatbot
+- **Python Version**: >= 3.9 required
 
-## 架构模式
-- 模块化设计
-- 分离的Web和CLI界面逻辑
-- 环境检查和配置管理
-- 错误处理分类
+## Dependencies
+- **Package Manager**: UV
+- **Core Dependencies**:
+  - openai >= 1.88.0
+  - langchain >= 0.3.25
+  - streamlit >= 1.46.0
+  - watchdog >= 6.0.0
+  - dotenv >= 0.9.9
+- **Dev Dependencies**:
+  - black >= 25.1.0
+  - pytest >= 8.4.1
 
-## 开发环境
-- Python >= 3.9
-- UV包管理器
-- OpenAI API密钥配置
-- 支持多平台（macOS/Linux/Windows）
+## Build Configuration
+- To be defined during technical setup
 
-## 性能指标
-- 模块加载时间：~0.66秒
-- API调用超时：30秒
-- 对话历史限制：20条消息 
+## Environment Variables
+- To be documented as needed
+
+## API Endpoints
+- To be defined for API-based projects
+
+## Database Schema
+- To be designed if database is required
+
+## Testing Strategy
+- To be established during planning phase
+
+## Deployment Configuration
+- To be defined based on deployment target
+
+## Project Structure
+- `src/` - Main source directory
+  - `core/` - Core chatbot functionality
+  - `ui/` - User interface modules (streamlit & CLI)
+  - `config/` - Configuration management
+  - `utils/` - Utility functions
+- `main.py` - Entry point
+- `pyproject.toml` - Project configuration 

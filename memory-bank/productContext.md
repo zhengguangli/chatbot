@@ -1,26 +1,24 @@
-# Product Context - 聊天机器人产品背景
+# Product Context
 
-## 用户群体
-- 需要AI助手进行中文对话的用户
-- 开发者和技术用户
-- 希望快速部署聊天机器人的企业用户
+> **Purpose**: Product-specific patterns, UI/UX decisions, and feature documentation.
 
-## 使用场景
-- 日常对话和咨询
-- 技术支持和问答
-- 开发环境中的AI助手
-- 学习和教育场景
+## Product Vision
+- To be defined based on task requirements
 
-## 产品特色
-- 🧠 基于OpenAI GPT-3.5-turbo模型
-- 💬 支持连续对话和上下文记忆
-- 🌐 美观的Streamlit Web界面
-- 💻 命令行界面作为备用模式
-- 🔧 UV进行快速依赖管理
-- 📝 智能会话历史管理（限制20条消息）
+## Core Features
+- To be identified during planning phase
 
-## 竞争优势
-- 双界面自动切换机制
-- 智能环境检查和错误处理
-- 中文优化的用户体验
-- 生产级质量保证 
+## User Experience Principles
+- To be established based on product type
+
+## UI/UX Patterns
+- To be documented during creative phase
+
+## Feature Specifications
+- No features defined yet
+
+## User Flows
+- To be mapped during design phase
+
+## Accessibility Requirements
+- To be defined based on target audience 
