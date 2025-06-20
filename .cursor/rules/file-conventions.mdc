@@ -1,0 +1,275 @@
+# File Conventions and Patterns Guide
+
+## Overview
+This project follows consistent naming conventions, file organization patterns, and coding standards to maintain clarity and maintainability.
+
+## Directory Structure Patterns
+
+### Source Code Organization
+```
+src/
+├── contracts/          # Interface definitions and abstract base classes
+├── core/              # Core business logic and data models
+├── services/          # Service implementations
+├── ui/                # User interface layers
+├── config/            # Configuration management
+├── launcher/          # Application launchers
+└── utils/             # Utility functions and helpers
+```
+
+### Documentation Organization  
+```
+memory-bank/
+├── archive/           # Completed task documentation
+├── creative/          # Design decisions and creative documentation
+├── reflection/        # Task retrospectives and lessons learned
+└── *.md              # Core memory bank files
+```
+
+## File Naming Conventions
+
+### Python Files
+- **snake_case**: All Python files use underscore notation
+- **Descriptive names**: Clear purpose indication
+- **Module grouping**: Related functionality grouped together
+
+Examples:
+- `model_providers.py` - Multiple model provider implementations
+- `message_handler.py` - Message processing functionality  
+- `session_manager.py` - Session lifecycle management
+- `service_container.py` - Dependency injection container
+
+### Documentation Files
+- **kebab-case**: Archive and reflection files use hyphens
+- **Date suffixes**: Archive files include YYYYMMDD format
+- **Descriptive prefixes**: Clear document type indication
+
+Examples:
+- `archive-openai-logging-implementation-20250620.md`
+- `reflection-openai-logging-implementation.md`
+- `creative-interface-design.md`
+
+### Configuration Files
+- **Standard names**: Follow ecosystem conventions
+- **Clear purpose**: Self-documenting file names
+
+Examples:
+- `.env` / `.env.example` - Environment variables
+- `pyproject.toml` - Python project configuration
+- `Makefile` - Build and development commands
+
+## Coding Patterns
+
+### Class Naming
+- **PascalCase**: All class names use capital case
+- **Descriptive**: Clear responsibility indication
+- **Interface suffix**: Abstract base classes end with appropriate terms
+
+Examples:
+```python
+class OpenAIProvider          # Concrete implementation
+class MessageHandler          # Service class
+class ChatbotConfig          # Configuration class
+class ModelProviderInterface # Abstract interface
+```
+
+### Function Naming
+- **snake_case**: All functions use underscore notation
+- **Verb-based**: Action-oriented naming
+- **Clear purpose**: Self-documenting function names
+
+Examples:
+```python
+def handle_user_message()     # Action-based naming
+def validate_configuration()  # Clear validation purpose
+def estimate_usage_cost()     # Specific calculation function
+def initialize_logging()      # Setup/initialization function
+```
+
+### Variable Naming
+- **snake_case**: Consistent with Python conventions
+- **Descriptive**: Avoid abbreviations
+- **Context-appropriate**: Meaningful within scope
+
+Examples:
+```python
+api_response_time            # Clear measurement variable
+user_message_content         # Descriptive content variable
+openai_client_instance       # Specific object reference
+configuration_settings       # Settings object
+```
+
+## Documentation Patterns
+
+### Memory Bank Documentation
+- **Structured headers**: Consistent section organization
+- **Status indicators**: Clear completion/progress markers
+- **Cross-references**: Links between related documents
+- **Timestamp tracking**: Creation and update dates
+
+### Code Documentation
+- **Type hints**: Comprehensive type annotations
+- **Docstrings**: Class and function documentation
+- **Inline comments**: Complex logic explanation
+- **TODO markers**: Future improvement notes
+
+Example documentation pattern:
+```python
+def estimate_usage_cost(
+    input_tokens: int,
+    output_tokens: int,
+    model_name: str
+) -> float:
+    """
+    Calculate estimated cost for API usage.
+    
+    Args:
+        input_tokens: Number of input tokens
+        output_tokens: Number of output tokens  
+        model_name: Name of the model used
+        
+    Returns:
+        Estimated cost in USD
+        
+    Raises:
+        ValueError: If token counts are negative
+    """
+```
+
+## Import Patterns
+
+### Standard Import Organization
+1. **Standard library imports**: First group
+2. **Third-party imports**: Second group  
+3. **Local imports**: Third group
+4. **Relative imports**: Last group
+
+Example:
+```python
+# Standard library
+import json
+import logging
+from typing import Dict, List, Optional
+
+# Third-party
+import openai
+import streamlit as st
+from langchain.schema import BaseMessage
+
+# Local imports
+from src.core.models import ChatMessage
+from src.contracts.model_provider import ModelProviderInterface
+
+# Relative imports
+from .message_handler import MessageHandler
+```
+
+### Import Aliases
+- **Consistent aliases**: Standard abbreviations
+- **Clear purpose**: Avoid confusion
+- **Project conventions**: Follow established patterns
+
+Common aliases:
+```python
+import streamlit as st          # Standard Streamlit alias
+from typing import Dict, List   # Import specific types
+```
+
+## Configuration Patterns
+
+### Environment Variables
+- **UPPERCASE**: All environment variables in caps
+- **UNDERSCORE_SEPARATION**: Clear word boundaries
+- **PREFIX_GROUPING**: Related variables grouped by prefix
+
+Examples:
+```bash
+OPENAI_API_KEY                 # API authentication
+OPENAI_BASE_URL               # Service endpoint
+OPENAI_LOG_LEVEL              # Logging configuration
+OPENAI_LOG_API_CALLS          # Feature toggle
+```
+
+### Configuration Classes
+- **Nested organization**: Related settings grouped
+- **Type validation**: Strict type checking
+- **Default values**: Sensible fallbacks
+- **Documentation**: Clear field descriptions
+
+## Error Handling Patterns
+
+### Exception Naming
+- **Descriptive names**: Clear error condition
+- **Inheritance hierarchy**: Proper exception inheritance
+- **Context preservation**: Maintain error context
+
+Examples:
+```python
+class ConfigurationError(Exception)     # Configuration issues
+class ModelProviderError(Exception)     # Provider-specific errors
+class ValidationError(Exception)        # Input validation errors
+```
+
+### Error Messages
+- **User-friendly**: Clear problem description
+- **Actionable**: Include resolution suggestions
+- **Context-rich**: Relevant error information
+- **Consistent format**: Standard message structure
+
+## Testing Patterns
+
+### Test File Naming
+- **test_ prefix**: All test files start with 'test_'
+- **Module mapping**: Test files mirror source structure
+- **Descriptive suffixes**: Clear test scope indication
+
+Examples:
+- `test_model_providers.py` - Tests for model provider functionality
+- `test_end_to_end.py` - Integration and end-to-end tests
+- `test_configuration.py` - Configuration testing
+
+### Test Function Naming
+- **test_ prefix**: All test functions start with 'test_'
+- **Behavior description**: Clear test purpose
+- **Scenario indication**: Specific test case description
+
+Examples:
+```python
+def test_openai_provider_successful_request()
+def test_configuration_validation_missing_api_key()
+def test_session_manager_creates_new_session()
+```
+
+## Logging Patterns
+
+### Log Message Format
+- **Structured logging**: Consistent message format
+- **Context information**: Relevant details included
+- **Severity appropriate**: Correct log levels
+- **Performance conscious**: Avoid expensive operations
+
+### Log Categories
+- **API calls**: Request/response logging
+- **Configuration**: Setup and validation
+- **Errors**: Exception and failure tracking
+- **Performance**: Timing and resource usage
+
+## Best Practices Summary
+
+### File Organization
+- Group related functionality together
+- Use consistent directory structures
+- Separate concerns clearly
+- Maintain logical hierarchies
+
+### Naming Consistency
+- Follow Python naming conventions
+- Use descriptive, self-documenting names
+- Maintain consistency across the project
+- Avoid abbreviations and acronyms
+
+### Documentation Standards
+- Document all public interfaces
+- Maintain up-to-date memory bank files
+- Use consistent formatting and structure
+- Include examples and usage patterns

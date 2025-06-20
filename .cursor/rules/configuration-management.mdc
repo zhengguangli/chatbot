@@ -1,0 +1,148 @@
+# Configuration Management Guide
+
+## Overview
+This project uses a multi-layered configuration system with environment variables, settings files, and runtime configuration management.
+
+## Configuration Files
+
+### Environment Configuration
+- **[.env](mdc:.env)** - Local environment variables (not in git)
+- **[.env.example](mdc:.env.example)** - Environment template with examples
+- **[src/config/environment.py](mdc:src/config/environment.py)** - Environment loading and validation
+- **[src/config/settings.py](mdc:src/config/settings.py)** - Application settings and configuration classes
+
+### Project Configuration
+- **[pyproject.toml](mdc:pyproject.toml)** - Python project configuration and dependencies
+- **[uv.lock](mdc:uv.lock)** - Locked dependency versions
+
+## Environment Variables
+
+### Required Variables
+```bash
+# OpenAI Configuration
+OPENAI_API_KEY=sk-proj-your-key-here
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_TIMEOUT=30
+
+# Logging Configuration  
+OPENAI_LOG_LEVEL=DEBUG
+OPENAI_LOG_API_CALLS=true
+OPENAI_LOG_RESPONSES=true
+OPENAI_LOG_TIMING=true
+OPENAI_LOG_TOKENS=true
+OPENAI_LOG_COSTS=true
+```
+
+### Configuration Loading
+Environment variables are loaded and validated in [src/config/environment.py](mdc:src/config/environment.py) with:
+- Automatic .env file loading
+- Type conversion and validation
+- Default value handling
+- Environment-specific overrides
+
+## Settings Architecture
+
+### Application Settings
+The [src/config/settings.py](mdc:src/config/settings.py) file contains:
+- **ChatbotConfig**: Main application configuration
+- **OpenAISettings**: OpenAI-specific settings with logging options
+- **UISettings**: Interface configuration options
+- **LoggingConfig**: Comprehensive logging configuration
+
+### Configuration Classes
+```python
+# Example configuration structure
+class OpenAISettings:
+    api_key: str
+    base_url: str
+    timeout: int
+    log_level: str
+    log_api_calls: bool
+    log_responses: bool
+    log_timing: bool
+    log_tokens: bool
+    log_costs: bool
+```
+
+## Logging Configuration
+
+### OpenAI API Logging
+Comprehensive logging system for API interactions:
+- **Request Logging**: Endpoint, model, parameters, headers
+- **Response Logging**: Status codes, timing, content
+- **Token Tracking**: Input/output token counts
+- **Cost Estimation**: Usage cost calculations
+- **Performance Metrics**: Request duration and timing
+
+### Log Levels and Control
+- **DEBUG**: Detailed API call information
+- **INFO**: General application flow
+- **WARNING**: Important notices and potential issues
+- **ERROR**: Error conditions and failures
+
+### Streamlit-Specific Handling
+Special configuration for Streamlit environment in [src/ui/adapters.py](mdc:src/ui/adapters.py):
+- Log level override for Streamlit compatibility
+- Console output formatting
+- Debug information visibility
+
+## Configuration Patterns
+
+### Environment Setup
+Use the Makefile command to create initial configuration:
+```bash
+make env  # Creates .env from .env.example
+```
+
+### Runtime Configuration
+Configuration is loaded and validated at startup in [src/main.py](mdc:src/main.py):
+- Environment variable loading
+- Configuration validation
+- Logging system initialization
+- Error handling for missing configuration
+
+### Development vs Production
+- **Development**: Use .env file for local configuration
+- **Production**: Use environment variables directly
+- **Testing**: Use test-specific configuration overrides
+
+## Security Considerations
+
+### Sensitive Information
+- **API Keys**: Never commit to git, use .env file locally
+- **URLs and Endpoints**: Use environment variables for flexibility
+- **Credentials**: Store in secure environment variable systems
+
+### Configuration Validation
+- Type checking for all configuration values
+- Required field validation
+- Format validation for URLs and keys
+- Default value handling for optional settings
+
+## Debugging Configuration
+
+### Configuration Inspection
+The application provides configuration visibility:
+- Startup logging shows loaded configuration (with sensitive data masked)
+- Debug mode provides detailed configuration information
+- Configuration errors are clearly reported with resolution suggestions
+
+### Common Issues and Solutions
+- **Missing API Key**: Clear error message with setup instructions
+- **Invalid URLs**: Validation with helpful error messages
+- **Permission Issues**: Environment variable access problems
+- **Type Mismatches**: Automatic type conversion where possible
+
+## Best Practices
+
+### Environment Management
+- Use .env for local development
+- Document all required variables in .env.example
+- Provide sensible defaults where possible
+- Validate configuration at startup
+
+### Configuration Updates
+- Update both .env.example and documentation when adding new variables
+- Test configuration changes in different environments
+- Maintain backward compatibility when possible
+- Use semantic versioning for configuration schema changes

@@ -1,58 +1,71 @@
-# Memory Bank系统指南
+# Memory Bank System Guide
 
-## 概述
-Memory Bank是一个持久化上下文管理系统，用于维护项目状态和开发过程中的各种上下文信息。
+## Overview
+The Memory Bank is a sophisticated project management and documentation system located in [memory-bank/](mdc:memory-bank/) that tracks active tasks, maintains project context, and preserves institutional knowledge.
 
-## 核心文件位置
-**重要**: 所有Memory Bank文件都位于 [memory-bank/](mdc:memory-bank/) 目录中。
+## Core Files
 
-### 主要文件结构
-- [memory-bank/projectbrief.md](mdc:memory-bank/projectbrief.md) - 项目基础信息和目标
-- [memory-bank/productContext.md](mdc:memory-bank/productContext.md) - 产品上下文和需求
-- [memory-bank/techContext.md](mdc:memory-bank/techContext.md) - 技术上下文和约束
-- [memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md) - 系统模式和最佳实践
-- [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) - 当前活跃上下文
-- [memory-bank/progress.md](mdc:memory-bank/progress.md) - 实施进度跟踪
-- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) - 任务跟踪和待办事项
-- [memory-bank/style-guide.md](mdc:memory-bank/style-guide.md) - 代码风格指南
+### Active Task Management
+- **[memory-bank/tasks.md](mdc:memory-bank/tasks.md)** - Current active task tracking with detailed checklists
+- **[memory-bank/activeContext.md](mdc:memory-bank/activeContext.md)** - Current focus and status
+- **[memory-bank/progress.md](mdc:memory-bank/progress.md)** - Development progress tracking
 
-### 创意阶段文档
-- [memory-bank/creative-*.md](mdc:memory-bank/) - 创意阶段的设计文档
+### Project Knowledge Base
+- **[memory-bank/projectbrief.md](mdc:memory-bank/projectbrief.md)** - High-level project overview
+- **[memory-bank/productContext.md](mdc:memory-bank/productContext.md)** - Product requirements and context
+- **[memory-bank/techContext.md](mdc:memory-bank/techContext.md)** - Technical architecture and decisions
+- **[memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md)** - Design patterns and conventions
+- **[memory-bank/style-guide.md](mdc:memory-bank/style-guide.md)** - Code style and standards
 
-### 反思和归档
-- `memory-bank/reflection/` - 任务反思文档
-- `memory-bank/archive/` - 已完成任务的归档
+### Documentation Archives
+- **[memory-bank/archive/](mdc:memory-bank/archive/)** - Completed task documentation
+- **[memory-bank/reflection/](mdc:memory-bank/reflection/)** - Task retrospectives and lessons learned
+- **[memory-bank/creative/](mdc:memory-bank/creative/)** - Design decisions and creative phase documentation
 
-## 文件操作规则
+## Memory Bank Workflow
 
-### 1. 路径验证
-- 在对Memory Bank文件进行任何 `create_file` 或 `edit_file` 操作前，必须验证路径以 `memory-bank/` 开头
-- 如果尝试在项目根目录创建核心文件（如 `tasks.md`），确保创建在 `memory-bank/tasks.md`
+### Task Lifecycle
+1. **Task Definition** - Defined in tasks.md with requirements and scope
+2. **Active Tracking** - Progress updated in activeContext.md and progress.md
+3. **Implementation** - Code changes with memory bank updates
+4. **Reflection** - Lessons learned documented in reflection/
+5. **Archive** - Complete documentation moved to archive/
 
-### 2. 任务跟踪
-- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) 是活跃任务的临时工作文档
-- 包含步骤、清单和组件列表的详细信息
-- 任务完成后，内容合并到归档文档中，然后清空文件
+### File Update Patterns
+- **tasks.md**: Always update when starting/completing tasks
+- **activeContext.md**: Update with current focus and latest changes
+- **progress.md**: Track major milestones and completion status
+- **Archive files**: Create upon task completion with comprehensive documentation
 
-### 3. 上下文继承
-基础上下文流动：
-```
-projectbrief.md → productContext.md, systemPatterns.md, techContext.md
-                ↓
-            activeContext.md → progress.md, tasks.md
-```
+## Recent Completed Tasks
 
-## 使用模式
+### OpenAI Logging Implementation (Level 2)
+- **Archive**: [memory-bank/archive/archive-openai-logging-implementation-20250620.md](mdc:memory-bank/archive/archive-openai-logging-implementation-20250620.md)
+- **Reflection**: [memory-bank/reflection/reflection-openai-logging-implementation.md](mdc:memory-bank/reflection/reflection-openai-logging-implementation.md)
+- **Achievement**: Complete API request/response logging with cost tracking
 
-### 开发阶段
-1. **VAN模式**: 验证和初始化，检查Memory Bank状态
-2. **PLAN模式**: 规划阶段，更新计划相关文档
-3. **CREATIVE模式**: 创意设计，生成设计文档
-4. **IMPLEMENT模式**: 实施阶段，跟踪进度
-5. **QA模式**: 质量保证，验证完成状态
+### Project Structure Optimization (Level 4)
+- **Archive**: [memory-bank/archive/archive-project-structure-optimization-20250620.md](mdc:memory-bank/archive/archive-project-structure-optimization-20250620.md)
+- **Achievement**: Modern launcher architecture with 100% backward compatibility
 
-### 最佳实践
-- 始终保持 [memory-bank/tasks.md](mdc:memory-bank/tasks.md) 为当前任务的单一真实来源
-- 定期更新 [memory-bank/progress.md](mdc:memory-bank/progress.md) 反映实施状态
-- 使用 [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) 维护当前焦点
-- 完成任务后及时归档到 `memory-bank/archive/` 目录
+## Usage Guidelines
+
+### When to Update Memory Bank
+- **Starting new tasks**: Update tasks.md and activeContext.md
+- **Major milestones**: Update progress.md
+- **Design decisions**: Document in systemPatterns.md or creative/
+- **Task completion**: Create reflection and archive documents
+- **Architecture changes**: Update techContext.md
+
+### Best Practices
+- Keep tasks.md current with detailed checklists
+- Update activeContext.md with each significant change
+- Document lessons learned in reflection files
+- Maintain comprehensive archive documentation
+- Use consistent naming: archive-[task-name]-YYYYMMDD.md
+
+### File Verification
+Always verify memory bank structure exists before operations:
+- memory-bank/ directory and all core files must exist
+- Missing files should be created with appropriate templates
+- Archive and reflection directories should be maintained

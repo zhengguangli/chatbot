@@ -1,0 +1,170 @@
+# Development Modes Guide
+
+## Overview
+This project uses a structured development workflow with five distinct modes, each designed for specific phases of development. Understanding these modes is crucial for effective collaboration.
+
+## Mode Definitions
+
+### VAN Mode (Validation & Analysis)
+**Purpose**: Project initialization, platform detection, and technical validation
+
+**When to Use**:
+- Starting new tasks
+- Technical validation before implementation
+- Platform compatibility checks
+- Complexity determination (Level 1-4)
+
+**Key Activities**:
+- Platform detection (OS, paths, commands)
+- Memory bank structure verification
+- Dependency and environment validation
+- Complexity analysis and workflow determination
+
+**Files Referenced**: [memory-bank/van-qa-validation-report.md](mdc:memory-bank/van-qa-validation-report.md)
+
+### PLAN Mode (Planning & Requirements)
+**Purpose**: Detailed task planning and requirement analysis
+
+**When to Use**:
+- Level 2-4 complexity tasks
+- Tasks requiring structured planning
+- Multi-component implementations
+
+**Key Activities**:
+- Requirements gathering and analysis
+- Task breakdown and milestone definition
+- Risk assessment and mitigation planning
+- Resource allocation and timeline estimation
+
+### CREATIVE Mode (Design & Architecture)
+**Purpose**: Design decisions and architectural planning
+
+**When to Use**:
+- Level 3-4 complexity tasks
+- Architectural decisions needed
+- UI/UX design requirements
+- System design and patterns
+
+**Key Activities**:
+- Design decision documentation
+- Architecture planning and documentation
+- UI/UX design and prototyping
+- Pattern selection and standardization
+
+**Files Created**: [memory-bank/creative/](mdc:memory-bank/creative/) directory
+
+### BUILD Mode (Implementation)
+**Purpose**: Code implementation and development
+
+**When to Use**:
+- After VAN validation (Level 1)
+- After PLAN and CREATIVE phases (Level 2-4)
+- Only when technical validation passes
+
+**Key Activities**:
+- Code implementation following design
+- Testing and quality assurance
+- Documentation updates
+- Integration and compatibility testing
+
+**Prerequisite**: Must pass VAN QA validation
+
+### REFLECT Mode (Retrospective & Documentation)
+**Purpose**: Task completion, lessons learned, and knowledge preservation
+
+**When to Use**:
+- After task completion
+- For major milestone documentation
+- Knowledge preservation and sharing
+
+**Key Activities**:
+- Reflection documentation creation
+- Lessons learned capture
+- Knowledge base updates
+- Archive documentation
+
+**Files Created**: [memory-bank/reflection/](mdc:memory-bank/reflection/) and [memory-bank/archive/](mdc:memory-bank/archive/)
+
+## Workflow Patterns
+
+### Level 1: Quick Bug Fix
+```
+VAN → BUILD → REFLECT
+```
+
+### Level 2: Simple Enhancement  
+```
+VAN → PLAN → BUILD → REFLECT
+```
+
+### Level 3: Intermediate Feature
+```
+VAN → PLAN → CREATIVE → BUILD → REFLECT
+```
+
+### Level 4: Complex System
+```
+VAN → PLAN → CREATIVE → BUILD → REFLECT → ARCHIVE
+```
+
+## Mode Transitions
+
+### VAN Mode Complexity Gates
+- **Level 1 detected**: Continue in VAN, proceed to BUILD
+- **Level 2-4 detected**: Force transition to PLAN mode
+- **QA command**: Always takes precedence, runs validation
+
+### Technical Validation (VAN QA)
+Required checkpoints before BUILD mode:
+1. **Dependency Verification**: All packages installed and compatible
+2. **Configuration Validation**: Config files format and compatibility
+3. **Environment Validation**: Build tools and permissions
+4. **Minimal Build Test**: Core functionality verification
+
+### BUILD Mode Prevention
+BUILD mode is blocked until VAN QA validation passes:
+- Dependency issues resolved
+- Configuration problems fixed
+- Environment setup complete
+- Build tests successful
+
+## Mode Activation Commands
+
+### Starting Modes
+- `VAN` - Begin initialization and validation
+- `VAN QA` - Run technical validation (takes precedence)
+- `PLAN` - Enter planning mode
+- `CREATIVE` - Enter design mode
+- `BUILD` - Enter implementation (requires QA pass)
+- `REFLECT` - Enter retrospective mode
+
+### Mode Status
+Current mode and status tracked in:
+- [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md)
+- [memory-bank/tasks.md](mdc:memory-bank/tasks.md)
+- [memory-bank/progress.md](mdc:memory-bank/progress.md)
+
+## Quality Gates
+
+### VAN to PLAN Transition
+Triggered automatically for Level 2-4 tasks with clear messaging:
+```
+🚫 LEVEL [2-4] TASK DETECTED
+Implementation in VAN mode is BLOCKED
+This task REQUIRES PLAN mode
+```
+
+### VAN QA Validation Status
+Four-point validation must pass:
+```
+✓ Dependencies    │ All required packages installed
+✓ Configurations  │ Format verified for platform  
+✓ Environment     │ Suitable for implementation
+✓ Build Tests     │ Core functionality verified
+```
+
+### BUILD Mode Readiness
+Clear indicators when ready to implement:
+```
+✅ VERIFIED - Clear to proceed to BUILD mode
+```

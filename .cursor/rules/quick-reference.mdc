@@ -1,5 +1,182 @@
----
-description:
-globs:
-alwaysApply: false
----
+# Quick Reference Guide
+
+## Project Overview
+This is an advanced AI chatbot project with sophisticated architecture, multiple model providers, comprehensive logging, and structured development workflows.
+
+## Key Entry Points
+- **Web Interface**: Run `make run` or `streamlit run src/main.py`
+- **CLI Interface**: Run `make cli` or `python src/cli.py`
+- **Development**: See [Makefile](mdc:Makefile) for all available commands
+
+## Development Workflow
+
+### Starting New Tasks
+1. **Activate VAN mode**: Type `VAN` to begin
+2. **Complexity determination**: System analyzes and assigns Level 1-4
+3. **Follow workflow**: VAN → PLAN → CREATIVE → BUILD → REFLECT (based on level)
+
+### Mode Commands
+- `VAN` - Initialization and validation
+- `VAN QA` - Technical validation (required before BUILD)
+- `PLAN` - Task planning and requirements
+- `CREATIVE` - Design decisions and architecture
+- `BUILD` - Code implementation
+- `REFLECT` - Task completion and documentation
+
+## Critical Files to Know
+
+### Core Architecture
+- [src/main.py](mdc:src/main.py) - Main application entry
+- [src/services/model_providers.py](mdc:src/services/model_providers.py) - OpenAI and AI providers
+- [src/core/models.py](mdc:src/core/models.py) - Core data structures
+- [src/config/settings.py](mdc:src/config/settings.py) - Configuration management
+
+### Memory Bank System
+- [memory-bank/tasks.md](mdc:memory-bank/tasks.md) - Active task tracking
+- [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md) - Current status
+- [memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md) - Design patterns
+- [memory-bank/archive/](mdc:memory-bank/archive/) - Completed task documentation
+
+### Configuration
+- [.env](mdc:.env) - Environment variables (local, not in git)
+- [.env.example](mdc:.env.example) - Configuration template
+- [pyproject.toml](mdc:pyproject.toml) - Project dependencies
+
+## Essential Commands
+
+### Development
+```bash
+make install    # Install dependencies
+make run        # Start web interface  
+make cli        # Start CLI interface
+make test       # Run tests
+make format     # Format code
+make env        # Create .env from template
+```
+
+### Quality Assurance
+- **VAN QA validation**: Four-point technical validation
+- **Code formatting**: Black formatter
+- **Testing**: pytest framework
+- **Linting**: Code quality checks
+
+## Key Features
+
+### AI Model Integration
+- **OpenAI Provider**: Full API with logging and cost tracking
+- **Context7 Enhanced**: Advanced context-aware responses
+- **Extensible Design**: Easy to add new providers
+
+### Advanced Logging
+- **API Request/Response**: Complete call tracking
+- **Token Counting**: Usage statistics
+- **Cost Estimation**: Real-time cost calculation
+- **Performance Metrics**: Timing and efficiency
+
+### Session Management
+- **Persistent History**: Conversation storage
+- **Multiple Sessions**: Support for various conversations
+- **Data Backup**: JSON-based persistence
+
+## Recent Achievements
+
+### Completed Tasks (Archived)
+1. **OpenAI Logging Implementation** (Level 2) - June 20, 2025
+   - Complete API monitoring system
+   - Token usage and cost tracking
+   - Streamlit environment compatibility
+
+2. **Project Structure Optimization** (Level 4) - June 20, 2025
+   - Modern launcher architecture
+   - 100% backward compatibility
+   - Enhanced development workflow
+
+## Configuration Quick Setup
+
+### Environment Variables
+```bash
+# Required
+OPENAI_API_KEY=sk-proj-your-key-here
+OPENAI_BASE_URL=https://api.openai.com/v1
+
+# Optional Logging
+OPENAI_LOG_LEVEL=DEBUG
+OPENAI_LOG_API_CALLS=true
+OPENAI_LOG_RESPONSES=true
+OPENAI_LOG_TIMING=true
+OPENAI_LOG_TOKENS=true
+OPENAI_LOG_COSTS=true
+```
+
+### First Time Setup
+```bash
+git clone <repository>
+cd chatbot
+make install     # Install dependencies
+make env         # Create .env file
+# Edit .env with your API key
+make run         # Start application
+```
+
+## Architecture Principles
+
+### Design Patterns
+- **Contract-based**: Interface definitions in src/contracts/
+- **Service-oriented**: Business logic in src/services/
+- **Layered**: Clear separation between UI, services, and core
+- **Configurable**: Environment-based configuration
+
+### Code Quality
+- **Type hints**: Comprehensive type annotations
+- **Documentation**: Docstrings and memory bank
+- **Testing**: Unit and integration tests
+- **Formatting**: Black code formatter
+
+## Troubleshooting
+
+### Common Issues
+- **Missing API Key**: Check .env file configuration
+- **Streamlit logging**: Logs may not appear due to log level
+- **Import errors**: Verify virtual environment activation
+- **Build failures**: Run VAN QA validation to diagnose
+
+### Debug Resources
+- [docs/troubleshooting-guide.md](mdc:docs/troubleshooting-guide.md) - Comprehensive troubleshooting
+- [memory-bank/van-qa-validation-report.md](mdc:memory-bank/van-qa-validation-report.md) - Latest validation status
+- [docs/openai-logging-guide.md](mdc:docs/openai-logging-guide.md) - Logging configuration help
+
+## Memory Bank Workflow
+
+### Always Update These Files
+- **Starting task**: Update [memory-bank/tasks.md](mdc:memory-bank/tasks.md) and [memory-bank/activeContext.md](mdc:memory-bank/activeContext.md)
+- **Making progress**: Update [memory-bank/progress.md](mdc:memory-bank/progress.md)
+- **Completing task**: Create reflection and archive documents
+- **Design decisions**: Document in [memory-bank/systemPatterns.md](mdc:memory-bank/systemPatterns.md)
+
+### File Verification
+Always verify memory bank structure exists:
+- memory-bank/ directory with all core files
+- Archive and reflection subdirectories
+- Proper file templates and formats
+
+## Quick Wins
+
+### Immediate Actions
+1. **Run VAN mode**: Get system status and readiness
+2. **Check configuration**: Verify .env and settings
+3. **Run tests**: Ensure system health
+4. **Review memory bank**: Understand current state
+
+### Next Steps
+- Provide task description for automatic workflow initiation
+- Use specific mode commands for targeted operations
+- Review archived tasks for context and patterns
+- Explore codebase using documented entry points
+
+For detailed information, refer to the specific rule files:
+- [project-architecture.mdc](mdc:.cursor/rules/project-architecture.mdc)
+- [memory-bank-system.mdc](mdc:.cursor/rules/memory-bank-system.mdc)  
+- [development-modes.mdc](mdc:.cursor/rules/development-modes.mdc)
+- [configuration-management.mdc](mdc:.cursor/rules/configuration-management.mdc)
+- [testing-and-validation.mdc](mdc:.cursor/rules/testing-and-validation.mdc)
+- [file-conventions.mdc](mdc:.cursor/rules/file-conventions.mdc)

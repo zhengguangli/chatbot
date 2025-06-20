@@ -1,0 +1,88 @@
+# Project Architecture Guide
+
+## Overview
+This is a sophisticated AI chatbot project with modular architecture, multiple model providers, and comprehensive development workflows.
+
+## Core Architecture
+
+### Entry Points
+- **Main Application**: [src/main.py](mdc:src/main.py) - Primary Streamlit web interface
+- **CLI Interface**: [src/cli.py](mdc:src/cli.py) - Command-line interface  
+- **Legacy Launcher**: [src/launcher/core.py](mdc:src/launcher/core.py) - Modern launcher architecture
+- **Streamlit App**: [src/streamlit_app.py](mdc:src/streamlit_app.py) - Direct Streamlit entry point
+
+### Core Components
+
+#### Contracts Layer (`src/contracts/`)
+Define interfaces and abstract base classes:
+- [src/contracts/model_provider.py](mdc:src/contracts/model_provider.py) - Model provider interface
+- [src/contracts/message_handler.py](mdc:src/contracts/message_handler.py) - Message handling contract
+- [src/contracts/session_manager.py](mdc:src/contracts/session_manager.py) - Session management interface
+- [src/contracts/storage_service.py](mdc:src/contracts/storage_service.py) - Storage contract
+
+#### Core Models (`src/core/`)
+Central data models and business logic:
+- [src/core/models.py](mdc:src/core/models.py) - Core data structures
+- [src/core/chatbot.py](mdc:src/core/chatbot.py) - Main chatbot logic
+- [src/core/client.py](mdc:src/core/client.py) - Client implementation
+- [src/core/errors.py](mdc:src/core/errors.py) - Error handling
+
+#### Services Layer (`src/services/`)
+Implementation of business services:
+- [src/services/model_providers.py](mdc:src/services/model_providers.py) - OpenAI and other providers
+- [src/services/context7_enhanced_provider.py](mdc:src/services/context7_enhanced_provider.py) - Context7 integration
+- [src/services/message_handler.py](mdc:src/services/message_handler.py) - Message processing
+- [src/services/session_manager.py](mdc:src/services/session_manager.py) - Session lifecycle
+- [src/services/storage_service.py](mdc:src/services/storage_service.py) - Data persistence
+- [src/services/service_container.py](mdc:src/services/service_container.py) - Dependency injection
+
+#### UI Layer (`src/ui/`)
+User interface implementations:
+- [src/ui/streamlit.py](mdc:src/ui/streamlit.py) - Streamlit UI components
+- [src/ui/cli.py](mdc:src/ui/cli.py) - CLI interface
+- [src/ui/adapters.py](mdc:src/ui/adapters.py) - UI adapters and utilities
+- [src/ui/compatibility.py](mdc:src/ui/compatibility.py) - Backward compatibility
+
+#### Configuration (`src/config/`)
+Configuration management:
+- [src/config/settings.py](mdc:src/config/settings.py) - Application settings
+- [src/config/environment.py](mdc:src/config/environment.py) - Environment handling
+
+## Key Features
+
+### Model Providers
+- **OpenAI Integration**: Full API support with logging and cost tracking
+- **Context7 Enhanced**: Advanced context-aware responses
+- **Extensible Design**: Easy to add new providers
+
+### Advanced Logging
+The system includes comprehensive API request/response logging:
+- Request details (endpoint, model, parameters)
+- Response tracking (status, timing, tokens)
+- Cost estimation and token counting
+- Configurable log levels and output formats
+
+### Session Management
+- Persistent conversation history
+- Multiple session support
+- Data backup and recovery
+- JSON-based storage in [data/](mdc:data/) directory
+
+## Development Tools
+
+### Build System
+- **Package Management**: Uses `uv` for dependency management ([pyproject.toml](mdc:pyproject.toml))
+- **Code Quality**: Black formatter, pytest testing
+- **Build Commands**: See [Makefile](mdc:Makefile) for available commands
+
+### Testing
+- **Unit Tests**: [tests/](mdc:tests/) directory
+- **End-to-End**: [tests/test_end_to_end.py](mdc:tests/test_end_to_end.py)
+- **Test Data**: [test_data/](mdc:test_data/) for fixtures
+
+## Memory Bank Integration
+The project uses a sophisticated memory bank system in [memory-bank/](mdc:memory-bank/) for:
+- Task tracking and documentation
+- Project context and patterns
+- Development workflow management
+- Architectural decision records
