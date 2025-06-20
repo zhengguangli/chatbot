@@ -1,0 +1,32 @@
+{
+  "467bbed8-1688-4f0b-9719-947793b60c04": {
+    "session_id": "467bbed8-1688-4f0b-9719-947793b60c04",
+    "user_id": "test_user",
+    "title": "测试会话",
+    "description": "",
+    "status": "active",
+    "created_at": "2025-06-20T21:03:36.061747",
+    "updated_at": "2025-06-20T21:03:36.061753",
+    "last_message_at": null,
+    "message_count": 0,
+    "total_tokens": 0,
+    "model_config": {
+      "model_name": "gpt-3.5-turbo",
+      "provider": "openai",
+      "temperature": 0.7,
+      "max_tokens": 2000,
+      "top_p": 1.0,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0,
+      "timeout": 30,
+      "stream": false,
+      "custom_params": {}
+    },
+    "settings": {},
+    "tags": [],
+    "metadata": {},
+    "_id": "467bbed8-1688-4f0b-9719-947793b60c04",
+    "_created_at": "2025-06-20T21:03:36.061776",
+    "_updated_at": "2025-06-20T21:03:36.061778"
+  }
+}
