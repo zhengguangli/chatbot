@@ -81,11 +81,29 @@ echo "OPENAI_API_KEY=your_actual_api_key_here" > .env
 # 必需配置
 OPENAI_API_KEY=your_actual_api_key_here
 
-# 可选配置
+# OpenAI API配置
 OPENAI_API_BASE=https://api.openai.com/v1      # 自定义API端点 (代理/镜像)
 OPENAI_ORG_ID=your_organization_id              # OpenAI组织ID
 OPENAI_PROJECT_ID=your_project_id               # OpenAI项目ID  
 OPENAI_TIMEOUT=30                               # API请求超时时间（秒）
+
+# 🔍 OpenAI请求日志配置（新增）
+OPENAI_REQUEST_LOGGING=true                     # 启用OpenAI请求日志
+OPENAI_LOG_LEVEL=INFO                          # OpenAI日志级别 (DEBUG/INFO/WARNING/ERROR)
+LOG_REQUEST_DETAILS=true                       # 记录请求详情 (端点/模型/参数)
+LOG_RESPONSE_DETAILS=true                      # 记录响应详情 (完成原因/响应长度)
+LOG_TOKEN_USAGE=true                           # 记录Token使用统计
+LOG_ESTIMATED_COST=true                        # 记录估算成本
+
+# 模型配置
+DEFAULT_MODEL=qwen3                            # 默认模型
+MODEL_TEMPERATURE=0.7                          # 温度参数
+MODEL_MAX_TOKENS=2048                          # 最大tokens
+
+# 其他配置
+LOG_LEVEL=INFO                                 # 全局日志级别
+UI_THEME=light                                 # UI主题 (light/dark)
+UI_LANGUAGE=zh-CN                              # 界面语言
 ```
 
 **配置说明：**
@@ -93,6 +111,34 @@ OPENAI_TIMEOUT=30                               # API请求超时时间（秒）
 - `OPENAI_ORG_ID`: 多组织用户的组织标识
 - `OPENAI_PROJECT_ID`: 项目级别的资源管理
 - `OPENAI_TIMEOUT`: API调用超时时间，默认30秒
+
+**📊 日志配置说明：**
+- `OPENAI_REQUEST_LOGGING`: 控制是否记录OpenAI API调用日志
+- `OPENAI_LOG_LEVEL`: 设置日志详细程度，DEBUG最详细，ERROR最简洁
+- `LOG_REQUEST_DETAILS`: 记录请求参数（端点、模型、温度等）
+- `LOG_RESPONSE_DETAILS`: 记录响应信息（完成原因、响应长度等）
+- `LOG_TOKEN_USAGE`: 记录输入/输出/总计tokens统计
+- `LOG_ESTIMATED_COST`: 基于模型定价计算每次调用的估算成本
+
+**🎯 不同环境的推荐配置：**
+
+**生产环境（最小化日志）：**
+```bash
+OPENAI_LOG_LEVEL=WARNING
+LOG_REQUEST_DETAILS=false
+LOG_RESPONSE_DETAILS=false
+LOG_TOKEN_USAGE=true
+LOG_ESTIMATED_COST=true
+```
+
+**开发环境（详细日志）：**
+```bash
+OPENAI_LOG_LEVEL=DEBUG
+LOG_REQUEST_DETAILS=true
+LOG_RESPONSE_DETAILS=true
+LOG_TOKEN_USAGE=true
+LOG_ESTIMATED_COST=true
+```
 
 ## 🎯 使用方法
 

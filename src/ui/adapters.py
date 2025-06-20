@@ -35,10 +35,22 @@ class UIAdapter:
             return True
         
         try:
+            # 确保OpenAI日志在所有环境中都可见
+            import os
+            import sys
+            is_streamlit = 'streamlit' in sys.modules or 'STREAMLIT_SERVER_PORT' in os.environ
+            
+            # 修改：在所有环境中都启用DEBUG级别，以便查看OpenAI日志
+            log_level = "DEBUG"  # 原来是 "WARNING" if is_streamlit else "INFO"
+            
+            # 特别配置OpenAI Provider的日志
+            openai_logger = logging.getLogger('services.model_providers')
+            openai_logger.setLevel(logging.DEBUG)
+            
             config = ServiceConfig(
                 storage_path="./data",
                 openai_api_key=self.openai_api_key,
-                log_level="INFO"
+                log_level=log_level
             )
             
             self.container = ServiceContainer(config)
@@ -162,15 +174,40 @@ class UIAdapter:
 
 # 全局适配器实例
 _global_adapter: Optional[UIAdapter] = None
+_initialization_lock: Optional[asyncio.Lock] = None
+
+def _get_initialization_lock():
+    """延迟创建初始化锁，避免在模块导入时创建事件循环"""
+    global _initialization_lock
+    if _initialization_lock is None:
+        try:
+            _initialization_lock = asyncio.Lock()
+        except RuntimeError:
+            # 如果没有事件循环，返回None，后续用简单的同步检查
+            return None
+    return _initialization_lock
 
 async def get_global_adapter(openai_api_key: Optional[str] = None) -> UIAdapter:
     """获取并初始化全局UI适配器实例"""
     global _global_adapter
     
-    if _global_adapter is None:
-        _global_adapter = UIAdapter(openai_api_key)
+    # 尝试获取锁，如果没有事件循环则使用简单的同步检查
+    lock = _get_initialization_lock()
     
-    if not _global_adapter._initialized:
-        await _global_adapter.initialize()
+    if lock:
+        # 使用锁防止并发初始化
+        async with lock:
+            if _global_adapter is None:
+                _global_adapter = UIAdapter(openai_api_key)
+            
+            if not _global_adapter._initialized:
+                await _global_adapter.initialize()
+    else:
+        # 如果没有事件循环，使用简单的检查（可能有竞态条件，但在Streamlit环境中通常是单线程的）
+        if _global_adapter is None:
+            _global_adapter = UIAdapter(openai_api_key)
+        
+        if not _global_adapter._initialized:
+            await _global_adapter.initialize()
 
     return _global_adapter 

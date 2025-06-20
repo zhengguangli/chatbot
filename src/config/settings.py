@@ -81,7 +81,13 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         "file_path": "./logs/chatbot.log",
         "max_file_size": 10485760,  # 10MB
-        "backup_count": 5
+        "backup_count": 5,
+        "openai_request_logging": True,  # 启用OpenAI请求日志
+        "openai_log_level": "INFO",     # OpenAI专用日志级别 (DEBUG/INFO/WARNING/ERROR)
+        "log_request_details": True,     # 记录请求详情
+        "log_response_details": True,    # 记录响应详情
+        "log_token_usage": True,        # 记录token使用情况
+        "log_estimated_cost": True      # 记录估算成本
     },
     "features": {
         "enable_conversation_history": True,
@@ -188,6 +194,12 @@ class ConfigManager:
             "MODEL_MAX_TOKENS": "model.max_tokens",
             "DATABASE_URL": "database.connection_string",
             "LOG_LEVEL": "logging.level",
+            "OPENAI_LOG_LEVEL": "logging.openai_log_level",
+            "OPENAI_REQUEST_LOGGING": "logging.openai_request_logging",
+            "LOG_REQUEST_DETAILS": "logging.log_request_details",
+            "LOG_RESPONSE_DETAILS": "logging.log_response_details",
+            "LOG_TOKEN_USAGE": "logging.log_token_usage",
+            "LOG_ESTIMATED_COST": "logging.log_estimated_cost",
             "UI_THEME": "ui.theme",
             "UI_LANGUAGE": "ui.language"
         }

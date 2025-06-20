@@ -127,9 +127,9 @@ class ApplicationLauncher:
         try:
             self.logger.info("🌐 启动Web界面 (Streamlit)...")
             
-            # 导入Web界面
+            # 直接导入并运行Streamlit界面，避免subprocess的多实例问题
             # 使用绝对导入
-            from ui import run_streamlit_interface
+            from ui.streamlit import run_streamlit_interface
             
             # 应用配置
             if self.config.port:
@@ -139,6 +139,7 @@ class ApplicationLauncher:
                 
             # 启动界面
             run_streamlit_interface()
+            return True
             
         except ImportError as e:
             self.logger.error(f"❌ Web界面模块导入失败: {e}")
@@ -147,8 +148,6 @@ class ApplicationLauncher:
         except Exception as e:
             self.logger.error(f"❌ Web界面启动失败: {e}")
             return False
-            
-        return True
     
     def launch_cli_interface(self):
         """启动CLI界面"""

@@ -18,19 +18,43 @@ async def initialize_openai_client():
         object: 模拟的客户端对象，实际返回适配器
     """
     try:
-        api_key = os.getenv("OPENAI_API_KEY")
+        # 确保我们在正确的事件循环中运行
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # 如果没有运行的事件循环，创建一个新的
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        api_key = os.getenv("OPENAI_API_KEY", "")
         adapter = await get_global_adapter(api_key)
         
         if adapter._initialized:
-            print("✅ AI服务初始化成功")
+            # 静默返回，不打印控制台消息避免重复输出
             return adapter
         else:
+            # 只在确实失败时打印错误（这种情况很少见）
             print("❌ AI服务初始化失败")
             return None
             
     except Exception as e:
-        print(f"❌ 初始化失败: {e}")
-        return None
+        # 更详细的错误处理，避免事件循环相关错误
+        error_msg = str(e)
+        if "different loop" in error_msg or "event loop" in error_msg.lower():
+            print("⚠️ 事件循环冲突，尝试重新初始化...")
+            try:
+                # 强制创建新的事件循环
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                api_key = os.getenv("OPENAI_API_KEY", "")
+                adapter = await get_global_adapter(api_key)
+                return adapter
+            except Exception as retry_e:
+                print(f"❌ 重试初始化失败: {retry_e}")
+                return None
+        else:
+            print(f"❌ 初始化失败: {e}")
+            return None
 
 
 async def get_chatbot_response(client, user_input: str, conversation_history: List[Dict[str, str]]) -> str:

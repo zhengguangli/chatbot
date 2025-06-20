@@ -13,11 +13,40 @@
 
 import sys
 import os
+import logging
 
 # 添加src目录到Python路径
 src_dir = os.path.dirname(os.path.abspath(__file__))
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
+
+# 配置全局日志系统，确保OpenAI日志可见
+def configure_application_logging():
+    """配置应用程序的全局日志系统"""
+    # 设置根日志级别
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    
+    # 特别配置OpenAI Provider的日志
+    openai_logger = logging.getLogger('services.model_providers')
+    openai_logger.setLevel(logging.DEBUG)
+    
+    # 确保在启动时显示日志状态
+    logger = logging.getLogger(__name__)
+    logger.info("🔍 应用程序日志系统已配置")
+    logger.info("✅ OpenAI API请求日志已启用 (级别: DEBUG)")
+
+# 在模块加载时立即配置日志
+configure_application_logging()
+
+# 全局状态控制，避免重复输出
+_BANNER_PRINTED = False
+_SESSION_INITIALIZED = False
 
 # 确保环境变量被加载 - 导入environment模块会自动加载.env文件
 import config.environment  # 这会触发load_dotenv()执行
@@ -28,7 +57,9 @@ from launcher import (
     handle_startup_error,
     format_startup_message,
     check_dependencies,
-    validate_configuration
+    validate_configuration,
+    detect_environment,
+    LaunchMode
 )
 from launcher.utils import print_system_info
 from launcher.args import handle_special_commands
@@ -36,11 +67,37 @@ from launcher.args import handle_special_commands
 
 def print_welcome_banner():
     """打印欢迎横幅"""
+    global _BANNER_PRINTED
+    
+    # 如果已经打印过，直接返回
+    if _BANNER_PRINTED:
+        return
+    
+    # 检测当前环境，在Streamlit环境中不输出横幅
+    current_env = detect_environment()
+    if current_env == LaunchMode.WEB:
+        # 在Web环境中使用简化输出，但只输出一次
+        # 使用Streamlit的会话状态来控制输出
+        try:
+            import streamlit as st
+            if not hasattr(st.session_state, 'banner_printed'):
+                print("🤖 智能启动检测")
+                st.session_state.banner_printed = True
+            _BANNER_PRINTED = True
+        except:
+            # 如果不在Streamlit环境中，使用全局状态
+            if not _BANNER_PRINTED:
+                print("🤖 智能启动检测")
+            _BANNER_PRINTED = True
+        return
+    
+    # 只在CLI环境中显示完整横幅
     print("""
 🤖 智能聊天机器人 v1.0.0 (重构版本)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 基于AI的智能对话系统 | 现代化分层架构 | 异步优先设计
 """)
+    _BANNER_PRINTED = True
 
 
 def perform_startup_checks(config):
@@ -75,8 +132,9 @@ def main():
         # 解析命令行参数
         config = parse_launch_arguments()
         
-        # 打印欢迎信息
-        if not config.debug:  # 调试模式下保持简洁
+        # 打印欢迎信息 - 只在非Web环境中
+        current_env = detect_environment()
+        if current_env != LaunchMode.WEB and not config.debug:  # 调试模式下保持简洁
             print_welcome_banner()
         
         # 显示启动信息

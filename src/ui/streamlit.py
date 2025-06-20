@@ -4,6 +4,8 @@ Streamlit Web界面模块 - 新架构版本
 """
 
 import streamlit as st
+import logging
+import sys
 from .compatibility import (
     initialize_openai_client,
     get_chatbot_response,
@@ -13,6 +15,35 @@ from .compatibility import (
     MAX_CONVERSATION_HISTORY
 )
 
+# 配置日志以便在Streamlit中查看OpenAI日志
+def configure_streamlit_logging():
+    """配置Streamlit的日志系统，确保OpenAI日志可见"""
+    # 设置根日志级别
+    logging.getLogger().setLevel(logging.DEBUG)
+    
+    # 特别配置OpenAI相关的日志
+    openai_logger = logging.getLogger('services.model_providers')
+    openai_logger.setLevel(logging.DEBUG)
+    
+    # 确保日志能在Streamlit中显示
+    if not openai_logger.handlers:
+        # 创建控制台处理器
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
+        
+        # 设置格式
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        console_handler.setFormatter(formatter)
+        
+        # 添加到logger
+        openai_logger.addHandler(console_handler)
+        openai_logger.propagate = False  # 避免重复输出
+
+# 在模块加载时配置日志
+configure_streamlit_logging()
+
 
 def run_streamlit_interface():
     """运行Streamlit Web界面 - 新架构版本"""
@@ -20,22 +51,25 @@ def run_streamlit_interface():
     import threading
     import asyncio
     
-    # 为Streamlit线程配置事件循环
-    current_thread = threading.current_thread()
-    print(f"当前线程: {current_thread.name}")
-    
-    # 配置全局事件循环策略以支持跨线程操作
-    try:
-        # 尝试为当前线程设置事件循环
-        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+    # 只在首次初始化时配置事件循环，避免重复
+    if "streamlit_initialized" not in st.session_state:
+        st.session_state.streamlit_initialized = True
+        
+        # 显示日志状态
+        with st.expander("🔍 OpenAI日志状态", expanded=False):
+            st.write("✅ OpenAI请求日志已启用")
+            st.write("📊 日志级别: DEBUG")
+            st.write("💡 发送消息后可在终端中查看详细API日志")
+        
+        # 为Streamlit线程配置事件循环（静默配置）
         try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
+            # 强制创建新的事件循环，避免线程冲突
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            print(f"已为线程 '{current_thread.name}' 创建新的事件循环")
-    except Exception as e:
-        st.error(f"设置事件循环时出错: {str(e)}")
+            # 确保事件循环策略正确设置
+            asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+        except Exception as e:
+            st.error(f"设置事件循环时出错: {str(e)}")
     
     # 页面配置
     st.set_page_config(
@@ -52,6 +86,10 @@ def run_streamlit_interface():
     # 侧边栏 - 新功能
     with st.sidebar:
         st.header("⚙️ 设置")
+        
+        # OpenAI日志状态显示
+        st.subheader("📊 OpenAI日志")
+        st.info("✅ 请求日志已启用\n🔍 查看终端输出以获取详细日志")
         
         # 显示系统状态
         if st.button("🔄 刷新状态"):
@@ -77,16 +115,50 @@ def run_streamlit_interface():
     if "client" not in st.session_state:
         try:
             with st.spinner("正在初始化AI服务..."):
-                # 使用事件循环运行异步初始化
+                # 强制为Streamlit线程创建专用事件循环
                 import asyncio
-                loop = asyncio.get_event_loop()
-                client = loop.run_until_complete(initialize_openai_client())
+                import threading
+                
+                # 尝试使用异步方式，如果失败则使用同步wrapper
+                try:
+                    # 尝试直接在当前线程中处理
+                    import asyncio
+                    try:
+                        # 检查是否有活跃的事件循环
+                        asyncio.get_running_loop()
+                        # 如果有，使用run_in_executor避免阻塞
+                        def sync_init():
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                return loop.run_until_complete(initialize_openai_client())
+                            finally:
+                                loop.close()
+                        
+                        # 使用Streamlit的内置方式处理异步
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(sync_init)
+                            client = future.result(timeout=30)
+                    except RuntimeError:
+                        # 没有运行的事件循环，直接创建新的
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            client = loop.run_until_complete(initialize_openai_client())
+                        finally:
+                            # 保持事件循环以供后续使用
+                            pass
+                except Exception as fallback_e:
+                    st.error(f"初始化客户端失败: {fallback_e}")
+                    client = None
+                
                 if not client:
                     st.error("❌ AI服务初始化失败，请检查配置")
                     st.info("请确保设置了OPENAI_API_KEY环境变量")
                     st.stop()
                 st.session_state.client = client
-                st.success("✅ AI服务已就绪")
+                # 静默初始化成功，不显示成功消息避免每次刷新都显示
         except Exception as e:
             st.error(f"初始化失败: {str(e)}")
             st.stop()
@@ -126,14 +198,48 @@ def run_streamlit_interface():
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("🤔 AI正在思考..."):
                 try:
-                    # 使用当前线程的事件循环运行异步函数
+                    # 在独立线程中运行异步函数，避免事件循环冲突
                     import asyncio
-                    loop = asyncio.get_event_loop()
-                    response = loop.run_until_complete(get_chatbot_response(
-                        st.session_state.client,
-                        user_input,
-                        st.session_state.conversation_history
-                    ))
+                    import concurrent.futures
+                    
+                    # 使用更简单的异步处理方式
+                    try:
+                        # 检查当前事件循环状态
+                        try:
+                            current_loop = asyncio.get_running_loop()
+                            # 如果在事件循环中，使用run_in_executor
+                            def sync_get_response():
+                                new_loop = asyncio.new_event_loop()
+                                asyncio.set_event_loop(new_loop)
+                                try:
+                                    return new_loop.run_until_complete(get_chatbot_response(
+                                        st.session_state.client,
+                                        user_input,
+                                        st.session_state.conversation_history
+                                    ))
+                                finally:
+                                    new_loop.close()
+                            
+                            # 在线程中运行，但更简化
+                            import concurrent.futures
+                            with concurrent.futures.ThreadPoolExecutor() as executor:
+                                future = executor.submit(sync_get_response)
+                                response = future.result(timeout=60)
+                        except RuntimeError:
+                            # 没有运行的事件循环，直接处理
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                response = loop.run_until_complete(get_chatbot_response(
+                                    st.session_state.client,
+                                    user_input,
+                                    st.session_state.conversation_history
+                                ))
+                            finally:
+                                pass  # 保持循环用于后续请求
+                    except Exception as async_error:
+                        st.error(f"获取响应失败: {async_error}")
+                        response = "抱歉，处理请求时出现了问题。"
                     
                     if response.startswith("抱歉，发生了错误："):
                         st.error(response)
