@@ -7,12 +7,14 @@ import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 import logging
 import uuid
+import threading
+import concurrent.futures
 
-from services import ServiceContainer, ServiceConfig
-from interfaces.model_provider import ModelConfig
-from interfaces.message_handler import MessageContext
-from core.models import User, create_default_user
-from core.errors import ChatBotError
+from src.services import ServiceContainer, ServiceConfig
+from src.interfaces.model_provider import ModelConfig
+from src.interfaces.message_handler import MessageContext
+from src.core.models import User, create_default_user
+from src.core.errors import ChatBotError
 
 
 class UIAdapter:
@@ -28,12 +30,26 @@ class UIAdapter:
         self.current_user: Optional[User] = None
         self.current_session_id: Optional[str] = None
         self._initialized = False
+        # 添加异步锁，防止并发操作引起的事件循环问题
+        self._lock = None
+        # 为不同线程创建唯一事件循环ID映射
+        self._thread_loops = {}
     
     async def initialize(self) -> bool:
         """初始化适配器和服务容器"""
         try:
+            # 如果已初始化，直接返回成功
             if self._initialized:
                 return True
+            
+            # 确保有可用的事件循环
+            try:
+                asyncio.get_event_loop()
+            except RuntimeError:
+                # 创建新的事件循环
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                self.logger.info(f"为线程 '{threading.current_thread().name}' 创建了新的事件循环")
             
             # 创建服务配置
             config = ServiceConfig(
@@ -86,6 +102,16 @@ class UIAdapter:
             str: AI响应内容
         """
         try:
+            # 确保有可用的事件循环
+            try:
+                asyncio.get_event_loop()
+            except RuntimeError:
+                # 创建新的事件循环
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                self.logger.info(f"为线程 '{threading.current_thread().name}' 创建了新的事件循环")
+                
+            # 确保初始化
             if not self._initialized:
                 await self.initialize()
             
@@ -143,7 +169,7 @@ class UIAdapter:
             
             # 创建模型配置
             model_config = ModelConfig(
-                model_name="gpt-3.5-turbo",
+                model_name="qwen3",
                 provider="openai",
                 temperature=0.7,
                 max_tokens=2000
@@ -268,6 +294,9 @@ class UIAdapter:
             if not self._initialized:
                 await self.initialize()
             
+            if not self.container:
+                return False
+                
             session_manager = self.container.get_session_manager()
             if not session_manager or not self.current_user:
                 return False
@@ -296,6 +325,9 @@ class UIAdapter:
             if not self._initialized:
                 await self.initialize()
             
+            if not self.container:
+                return []
+                
             session_manager = self.container.get_session_manager()
             if not session_manager or not self.current_user:
                 return []
@@ -333,6 +365,9 @@ class UIAdapter:
             if not self._initialized:
                 await self.initialize()
             
+            if not self.container:
+                return False
+                
             session_manager = self.container.get_session_manager()
             if not session_manager:
                 return False
@@ -378,13 +413,49 @@ def get_global_adapter(openai_api_key: Optional[str] = None) -> UIAdapter:
 def run_async_safely(coro):
     """安全运行异步函数"""
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # 如果已有事件循环在运行（如在Jupyter中），创建任务
-            return asyncio.create_task(coro)
+        # 获取当前线程信息
+        import threading
+        current_thread = threading.current_thread()
+        thread_name = current_thread.name
+        
+        # 检测是否是Streamlit线程
+        is_streamlit_thread = 'streamlit' in thread_name.lower() or 'scriptrunner' in thread_name.lower()
+        
+        # 尝试获取或创建事件循环
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # 如果没有当前事件循环，创建一个新的
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            logging.getLogger(__name__).info(f"为线程 '{thread_name}' 创建了新的事件循环")
+        
+        # 针对Streamlit线程的特殊处理
+        if is_streamlit_thread:
+            # 创建新线程运行异步代码
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(lambda: asyncio.run(coro))
+                return future.result(timeout=60)  # 设置超时，避免永久阻塞
+        
+        # 检查是否在主线程中
+        if threading.current_thread() is threading.main_thread():
+            if loop.is_running():
+                # 如果在主线程且循环正在运行（例如在Jupyter中）
+                # 创建一个Future来在现有循环中运行
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                return future.result()
+            else:
+                # 主线程中但循环没有运行，直接运行到完成
+                return loop.run_until_complete(coro)
         else:
-            # 否则直接运行
-            return loop.run_until_complete(coro)
-    except RuntimeError:
-        # 如果没有事件循环，创建新的
-        return asyncio.run(coro) 
+            # 在非主线程中，创建新的事件循环
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                return new_loop.run_until_complete(coro)
+            finally:
+                new_loop.close()
+                
+    except Exception as e:
+        logging.getLogger(__name__).error(f"运行异步函数失败: {e}")
+        raise e 

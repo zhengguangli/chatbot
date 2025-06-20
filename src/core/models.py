@@ -98,7 +98,7 @@ class User:
 @dataclass
 class ModelConfiguration:
     """模型配置"""
-    model_name: str = "gpt-3.5-turbo"
+    model_name: str = "qwen3"
     provider: ModelProvider = ModelProvider.OPENAI
     temperature: float = 0.7
     max_tokens: int = 2000
@@ -128,7 +128,7 @@ class ModelConfiguration:
     def from_dict(cls, data: Dict[str, Any]) -> 'ModelConfiguration':
         """从字典创建"""
         return cls(
-            model_name=data.get("model_name", "gpt-3.5-turbo"),
+            model_name=data.get("model_name", "qwen3"),
             provider=ModelProvider(data.get("provider", "openai")),
             temperature=data.get("temperature", 0.7),
             max_tokens=data.get("max_tokens", 2000),

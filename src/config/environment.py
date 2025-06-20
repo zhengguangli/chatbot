@@ -31,10 +31,10 @@ def check_environment():
         issues.append("OPENAI_API_KEY格式不正确")
 
     # 检查可选的OpenAI配置项
-    base_uri = os.getenv("OPENAI_BASE_URI")
+    base_uri = os.getenv("OPENAI_API_BASE")
     if base_uri:
         if not base_uri.startswith(("http://", "https://")):
-            warnings.append("OPENAI_BASE_URI应该以http://或https://开头")
+            warnings.append("OPENAI_API_BASE应该以http://或https://开头")
 
     org_id = os.getenv("OPENAI_ORG_ID")
     if org_id and len(org_id.strip()) < 5:
@@ -64,7 +64,7 @@ def get_openai_config():
     """获取OpenAI配置参数"""
     return {
         "api_key": os.getenv("OPENAI_API_KEY"),
-        "base_url": os.getenv("OPENAI_BASE_URI"),
+        "base_url": os.getenv("OPENAI_API_BASE"),
         "organization": os.getenv("OPENAI_ORG_ID"),
         "project": os.getenv("OPENAI_PROJECT_ID"),
         "timeout": _parse_timeout(os.getenv("OPENAI_TIMEOUT")),

@@ -51,7 +51,7 @@ class ConfigItem:
 DEFAULT_CONFIG: Dict[str, Any] = {
     "model": {
         "provider": "openai",
-        "model_name": "gpt-3.5-turbo",
+        "model_name": "qwen3",
         "temperature": 0.7,
         "max_tokens": 2000,
         "timeout": 30,

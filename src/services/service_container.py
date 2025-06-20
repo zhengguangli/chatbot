@@ -6,12 +6,13 @@
 from typing import Dict, Any, Optional, Type, TypeVar
 import logging
 from dataclasses import dataclass
+import os
 
-from ..interfaces.storage_service import IStorageService, StorageConfig, StorageBackend
-from ..interfaces.session_manager import ISessionManager
-from ..interfaces.message_handler import IMessageHandler
-from ..interfaces.model_provider import IModelProvider
-from ..interfaces.config_manager import IConfigManager
+from src.interfaces.storage_service import IStorageService, StorageConfig, StorageBackend
+from src.interfaces.session_manager import ISessionManager
+from src.interfaces.message_handler import IMessageHandler
+from src.interfaces.model_provider import IModelProvider
+from src.interfaces.config_manager import IConfigManager
 
 from .storage_service import FileStorageService
 from .session_manager import SessionManager
@@ -192,42 +193,68 @@ class ServiceContainer:
         self._services["IMessageHandler"] = message_handler
         self.logger.debug("消息处理器初始化成功")
     
-    async def _initialize_model_providers(self):
+    async def _initialize_model_providers(self) -> bool:
         """初始化模型提供者"""
-        self.logger.debug("初始化模型提供者...")
-        
-        # 创建模型提供者注册表
-        provider_registry = ModelProviderRegistry(logger=self.logger)
-        
-        # 创建OpenAI提供者
-        openai_provider = OpenAIProvider(
-            api_key=self.config.openai_api_key,
-            logger=self.logger
-        )
-        
-        # 注册OpenAI提供者
-        provider_registry.register_provider("openai", openai_provider)
-        self.logger.info("提供者 openai 注册成功")
-        
-        provider_registry.set_default_provider("openai")
-        self.logger.info("默认提供者设置为: openai")
-        
-        # 初始化提供者
-        init_configs = {
-            "openai": {"api_key": self.config.openai_api_key}
-        }
-        
-        results = await provider_registry.initialize_all_providers(init_configs)
-        
-        if results.get("openai", False):
-            self.logger.info("提供者 openai 初始化成功")
-        else:
-            self.logger.warning("OpenAI提供者初始化失败，但继续运行")
-        
-        self._services["ModelProviderRegistry"] = provider_registry
-        self._services["OpenAIProvider"] = openai_provider
-        
-        self.logger.debug("模型提供者初始化成功")
+        try:
+            self.logger.debug("初始化模型提供者...")
+            
+            # 创建模型提供者注册表
+            provider_registry = ModelProviderRegistry(self.logger)
+            
+            # 检查是否启用Context7
+            context7_enabled = os.getenv("CONTEXT7_ENABLED", "false").lower() == "true"
+            
+            if context7_enabled:
+                # 使用Context7增强的提供者
+                try:
+                    from .context7_enhanced_provider import Context7EnhancedProvider
+                    provider = Context7EnhancedProvider(
+                        api_key=self.config.openai_api_key,
+                        logger=self.logger
+                    )
+                    self.logger.info("使用Context7增强的OpenAI提供者")
+                except ImportError:
+                    self.logger.warning("无法导入Context7增强提供者，回退到标准OpenAI提供者")
+                    provider = OpenAIProvider(
+                        api_key=self.config.openai_api_key,
+                        logger=self.logger
+                    )
+            else:
+                # 使用标准OpenAI提供者
+                provider = OpenAIProvider(
+                    api_key=self.config.openai_api_key,
+                    logger=self.logger
+                )
+            
+            # 注册提供者
+            provider_registry.register_provider("openai", provider)
+            self.logger.info("提供者 openai 注册成功")
+            
+            provider_registry.set_default_provider("openai")
+            self.logger.info("默认提供者设置为: openai")
+            
+            # 初始化所有提供者
+            init_configs = {
+                "openai": {"api_key": self.config.openai_api_key}
+            }
+            
+            results = await provider_registry.initialize_all_providers(init_configs)
+            
+            if results.get("openai", False):
+                self.logger.info("提供者 openai 初始化成功")
+            else:
+                self.logger.warning("OpenAI提供者初始化失败，但继续运行")
+            
+            # 将服务添加到容器
+            self._services["ModelProviderRegistry"] = provider_registry
+            self._services["OpenAIProvider"] = provider
+            
+            self.logger.debug("模型提供者初始化成功")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"初始化模型提供者失败: {e}")
+            return False
     
     def _setup_logging(self) -> logging.Logger:
         """设置日志"""

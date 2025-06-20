@@ -10,6 +10,7 @@ dependencies = [
     "openai>=1.88.0",
     "streamlit>=1.46.0",
     "watchdog>=6.0.0",
+    "aiohttp>=3.8.0",
 ]
 
 [dependency-groups]

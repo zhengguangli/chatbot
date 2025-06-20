@@ -5,7 +5,7 @@
 ## ✨ 功能特性
 
 ### 🎯 核心功能
-- 🧠 基于OpenAI GPT-3.5-turbo模型
+- 🧠 基于OpenAI qwen3模型
 - 💬 支持连续对话和上下文记忆
 - 🌐 提供美观的Streamlit Web界面
 - 💻 支持命令行界面作为备用模式
@@ -82,14 +82,14 @@ echo "OPENAI_API_KEY=your_actual_api_key_here" > .env
 OPENAI_API_KEY=your_actual_api_key_here
 
 # 可选配置
-OPENAI_BASE_URI=https://api.openai.com/v1      # 自定义API端点 (代理/镜像)
+OPENAI_API_BASE=https://api.openai.com/v1      # 自定义API端点 (代理/镜像)
 OPENAI_ORG_ID=your_organization_id              # OpenAI组织ID
 OPENAI_PROJECT_ID=your_project_id               # OpenAI项目ID  
 OPENAI_TIMEOUT=30                               # API请求超时时间（秒）
 ```
 
 **配置说明：**
-- `OPENAI_BASE_URI`: 用于配置代理或镜像API端点
+- `OPENAI_API_BASE`: 用于配置代理或镜像API端点
 - `OPENAI_ORG_ID`: 多组织用户的组织标识
 - `OPENAI_PROJECT_ID`: 项目级别的资源管理
 - `OPENAI_TIMEOUT`: API调用超时时间，默认30秒

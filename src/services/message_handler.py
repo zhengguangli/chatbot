@@ -6,10 +6,10 @@ from typing import Dict, List, Optional, Any
 import logging
 import asyncio
 
-from ..interfaces.message_handler import (
+from src.interfaces.message_handler import (
     IMessageHandler, ProcessedMessage, MessageContext, MessageType
 )
-from ..core.errors import ValidationError, ErrorCode
+from src.core.errors import ValidationError, ErrorCode
 
 
 class MessageHandler(IMessageHandler):

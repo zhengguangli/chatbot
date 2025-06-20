@@ -3,7 +3,7 @@
 这是一个基于OpenAI GPT的中文智能聊天机器人，采用模块化架构设计，支持双界面运行模式。
 
 ## 核心特性
-- 🧠 基于OpenAI GPT-3.5-turbo模型的中文聊天机器人
+- 🧠 基于OpenAI qwen3模型的中文聊天机器人
 - 🌐 支持Streamlit Web界面和CLI命令行界面双模式
 - 🔧 使用UV进行现代化Python依赖管理
 - 📝 集成Memory Bank系统进行上下文管理

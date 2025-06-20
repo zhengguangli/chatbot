@@ -19,6 +19,9 @@ src_dir = os.path.dirname(os.path.abspath(__file__))
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
+# 确保环境变量被加载 - 导入environment模块会自动加载.env文件
+import config.environment  # 这会触发load_dotenv()执行
+
 from launcher import (
     parse_launch_arguments,
     launch_application, 

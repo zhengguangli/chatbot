@@ -28,7 +28,7 @@
 
 ## Environment Variables
 - **OPENAI_API_KEY**: OpenAI API密钥 (必需)
-- **OPENAI_BASE_URI**: 自定义API端点 (可选)
+- **OPENAI_API_BASE**: 自定义API端点 (可选)
 - **OPENAI_ORG_ID**: 组织ID (可选)
 - **OPENAI_PROJECT_ID**: 项目ID (可选)
 - **OPENAI_TIMEOUT**: API超时时间，默认30秒

@@ -7,20 +7,54 @@ import os
 from typing import Dict, List, Optional, Any, AsyncGenerator
 import logging
 import asyncio
+import aiohttp
+import json
 
-from ..interfaces.model_provider import (
+from src.interfaces.model_provider import (
     IModelProvider, ModelConfig, ModelResponse
 )
-from ..core.errors import APIError, ErrorCode
+from src.core.errors import APIError, ErrorCode
 
 
 class OpenAIProvider(IModelProvider):
     """OpenAI模型提供者实现"""
     
     def __init__(self, api_key: Optional[str] = None, logger: Optional[logging.Logger] = None):
+        # 优先使用传入的api_key，然后是环境变量
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.logger = logger or logging.getLogger(__name__)
-        self.base_url = "https://api.openai.com/v1"
+        # 支持自定义API端点
+        self.base_url = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+        
+        # 额外的配置项
+        self.organization = os.getenv("OPENAI_ORG_ID")
+        self.project = os.getenv("OPENAI_PROJECT_ID")
+        self.timeout = self._parse_timeout(os.getenv("OPENAI_TIMEOUT", "30"))
+        
+        # 模型配置
+        self.default_model = os.getenv("DEFAULT_MODEL", "qwen3")
+        self.default_max_tokens = int(os.getenv("MAX_TOKENS", "2000"))
+        self.default_temperature = float(os.getenv("TEMPERATURE", "0.7"))
+        
+        # Context7配置
+        self.context7_enabled = os.getenv("CONTEXT7_ENABLED", "false").lower() == "true"
+        
+        # 记录配置状态
+        if self.api_key:
+            self.logger.info(f"OpenAI Provider配置成功，使用模型: {self.default_model}")
+            if self.context7_enabled:
+                self.logger.info("Context7集成已启用")
+        else:
+            self.logger.warning("OpenAI API密钥未设置")
+            
+    def _parse_timeout(self, timeout_str: Optional[str]) -> float:
+        """解析超时配置"""
+        if not timeout_str:
+            return 30.0
+        try:
+            return float(timeout_str)
+        except ValueError:
+            return 30.0
     
     async def initialize(self, config: Dict[str, Any]) -> bool:
         """初始化提供者"""
@@ -47,39 +81,101 @@ class OpenAIProvider(IModelProvider):
             if not messages:
                 raise APIError("消息列表不能为空", ErrorCode.API_REQUEST_INVALID)
             
-            # 构建响应内容（模拟）
-            last_message = messages[-1].get("content", "")
+            if not self.api_key:
+                raise APIError("OpenAI API密钥未设置", ErrorCode.API_KEY_MISSING)
+                
+            # 构建API请求头
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
             
-            if "你好" in last_message:
-                response_content = "你好！我是AI助手，很高兴为您服务。有什么我可以帮助您的吗？"
-            elif "天气" in last_message:
-                response_content = "抱歉，我无法获取实时天气信息。建议您查看当地天气预报应用。"
-            else:
-                response_content = f"我理解您说的是：{last_message}。请告诉我更多详情，我会尽力帮助您。"
+            # 添加组织ID（如果有）
+            if self.organization:
+                headers["OpenAI-Organization"] = self.organization
+                
+            # 添加项目ID（如果有）
+            if self.project:
+                headers["OpenAI-Project"] = self.project
             
-            # 计算token数
-            total_tokens = sum(len(msg.get("content", "").split()) for msg in messages)
-            total_tokens += len(response_content.split())
+            endpoint = f"{self.base_url}/chat/completions"
+            
+            # 使用环境变量中的默认值，如果config中没有指定
+            model_name = config.model_name or self.default_model
+            max_tokens = config.max_tokens if config.max_tokens > 0 else self.default_max_tokens
+            temperature = config.temperature if config.temperature >= 0 else self.default_temperature
+            
+            payload = {
+                "model": model_name,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+            
+            # 记录请求信息（不包含API密钥）
+            self.logger.debug(f"发送请求到OpenAI: {model_name}, 消息数: {len(messages)}")
+            
+            # 发送API请求，使用配置的超时时间
+            timeout = aiohttp.ClientTimeout(total=self.timeout)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(endpoint, headers=headers, json=payload) as resp:
+                    if resp.status != 200:
+                        error_text = await resp.text()
+                        self.logger.error(f"OpenAI API错误 {resp.status}: {error_text}")
+                        raise APIError(
+                            f"OpenAI API调用失败: HTTP {resp.status}, {error_text}", 
+                            ErrorCode.API_REQUEST_FAILED
+                        )
+                    
+                    # 解析响应
+                    result = await resp.json()
+                    
+            # 从响应中提取内容
+            response_content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            finish_reason = result.get("choices", [{}])[0].get("finish_reason", "unknown")
+            
+            # 获取token使用情况
+            usage = result.get("usage", {})
+            total_tokens = usage.get("total_tokens", 0)
             
             # 创建响应对象
             response = ModelResponse(
                 content=response_content,
                 usage_tokens=total_tokens,
-                model=config.model_name,
-                finish_reason="stop",
+                model=model_name,
+                finish_reason=finish_reason,
                 metadata={
                     "provider": "openai",
-                    "temperature": config.temperature,
-                    "max_tokens": config.max_tokens
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "context7_enabled": self.context7_enabled
                 }
             )
             
             self.logger.debug(f"生成响应成功，tokens: {total_tokens}")
             return response
             
+        except aiohttp.ClientError as e:
+            self.logger.error(f"网络请求失败: {e}")
+            return ModelResponse(
+                content=f"抱歉，网络连接出现问题: {str(e)}",
+                usage_tokens=0,
+                model=config.model_name or self.default_model,
+                finish_reason="error",
+                metadata={"error": str(e), "error_type": "network"}
+            )
         except Exception as e:
             self.logger.error(f"生成响应失败: {e}")
-            raise APIError(f"OpenAI API调用失败: {str(e)}", ErrorCode.API_REQUEST_FAILED)
+            # 返回友好的错误响应，而不是直接抛出异常
+            return ModelResponse(
+                content=f"抱歉，AI服务遇到了问题: {str(e)}",
+                usage_tokens=0,
+                model=config.model_name or self.default_model,
+                finish_reason="error",
+                metadata={"error": str(e)}
+            )
     
     async def generate_stream_response(
         self,
@@ -104,7 +200,7 @@ class OpenAIProvider(IModelProvider):
         """验证模型配置"""
         try:
             # 检查模型名称
-            supported_models = ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"]
+            supported_models = ["qwen3", "gpt-4", "gpt-4-turbo"]
             if config.model_name not in supported_models:
                 return False
             
@@ -124,7 +220,7 @@ class OpenAIProvider(IModelProvider):
     def get_supported_models(self) -> List[str]:
         """获取支持的模型列表"""
         return [
-            "gpt-3.5-turbo",
+            "qwen3",
             "gpt-4",
             "gpt-4-turbo",
             "gpt-4o"
@@ -137,7 +233,7 @@ class OpenAIProvider(IModelProvider):
     def get_model_limits(self, model: str) -> Dict[str, Any]:
         """获取模型限制信息"""
         limits = {
-            "gpt-3.5-turbo": {
+            "qwen3": {
                 "max_tokens": 4096,
                 "context_window": 16384,
                 "cost_per_1k_tokens": 0.002

@@ -16,6 +16,26 @@ from .compatibility import (
 
 def run_streamlit_interface():
     """运行Streamlit Web界面 - 新架构版本"""
+    # 确保在Streamlit环境中正确处理异步
+    import threading
+    import asyncio
+    
+    # 为Streamlit线程配置事件循环
+    current_thread = threading.current_thread()
+    print(f"当前线程: {current_thread.name}")
+    
+    # 配置全局事件循环策略以支持跨线程操作
+    try:
+        # 尝试为当前线程设置事件循环
+        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            print(f"已为线程 '{current_thread.name}' 创建新的事件循环")
+    except Exception as e:
+        st.error(f"设置事件循环时出错: {str(e)}")
     
     # 页面配置
     st.set_page_config(
@@ -55,14 +75,18 @@ def run_streamlit_interface():
     
     # 初始化OpenAI客户端（使用兼容性包装器）
     if "client" not in st.session_state:
-        with st.spinner("正在初始化AI服务..."):
-            client = initialize_openai_client()
-            if not client:
-                st.error("❌ AI服务初始化失败，请检查配置")
-                st.info("请确保设置了OPENAI_API_KEY环境变量")
-                st.stop()
-            st.session_state.client = client
-            st.success("✅ AI服务已就绪")
+        try:
+            with st.spinner("正在初始化AI服务..."):
+                client = initialize_openai_client()
+                if not client:
+                    st.error("❌ AI服务初始化失败，请检查配置")
+                    st.info("请确保设置了OPENAI_API_KEY环境变量")
+                    st.stop()
+                st.session_state.client = client
+                st.success("✅ AI服务已就绪")
+        except Exception as e:
+            st.error(f"初始化失败: {str(e)}")
+            st.stop()
     
     # 初始化会话状态
     if "conversation_history" not in st.session_state:
@@ -181,7 +205,7 @@ def run_enhanced_streamlit_interface():
         st.subheader("🤖 模型配置")
         model_choice = st.selectbox(
             "选择AI模型",
-            ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"],
+            ["qwen3", "gpt-4", "gpt-4-turbo"],
             index=0
         )
         

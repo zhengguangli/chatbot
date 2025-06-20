@@ -15,6 +15,12 @@ project_root = os.path.dirname(os.path.abspath(__file__))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# 确保.env文件被加载
+try:
+    from src.config import environment  # 这会触发load_dotenv()
+except ImportError:
+    pass  # 如果导入失败，继续运行
+
 if __name__ == "__main__":
     try:
         # 导入并运行src中的主程序
@@ -28,7 +34,7 @@ if __name__ == "__main__":
         
         try:
             # 尝试回退到基本功能
-            from src import run_streamlit_interface, run_cli_interface
+            from src.ui import run_streamlit_interface, run_cli_interface
             
             # 简单的环境检测
             if len(sys.argv) > 0 and 'streamlit' in sys.argv[0]:

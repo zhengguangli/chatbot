@@ -42,10 +42,12 @@ class ErrorCode(Enum):
     
     # API错误 (1100-1199)
     API_KEY_INVALID = "API_KEY_INVALID"
+    API_KEY_MISSING = "API_KEY_MISSING"
     API_QUOTA_EXCEEDED = "API_QUOTA_EXCEEDED"
     API_RATE_LIMITED = "API_RATE_LIMITED"
     API_MODEL_NOT_FOUND = "API_MODEL_NOT_FOUND"
     API_REQUEST_INVALID = "API_REQUEST_INVALID"
+    API_REQUEST_FAILED = "API_REQUEST_FAILED"
     
     # 验证错误 (1200-1299)
     VALIDATION_REQUIRED_FIELD = "VALIDATION_REQUIRED_FIELD"
@@ -217,10 +219,12 @@ ERROR_MESSAGES: Dict[ErrorCode, str] = {
     
     # API错误
     ErrorCode.API_KEY_INVALID: "API密钥无效，请检查配置文件中的API密钥",
+    ErrorCode.API_KEY_MISSING: "API密钥缺失，请设置环境变量OPENAI_API_KEY或在配置中提供API密钥",
     ErrorCode.API_QUOTA_EXCEEDED: "API调用次数已用完，请等待配额重置或升级账户",
     ErrorCode.API_RATE_LIMITED: "API调用过于频繁，请稍后重试",
     ErrorCode.API_MODEL_NOT_FOUND: "指定的AI模型不存在，请检查模型名称",
     ErrorCode.API_REQUEST_INVALID: "API请求格式无效，请检查请求参数",
+    ErrorCode.API_REQUEST_FAILED: "API请求失败，请检查网络连接和API状态",
     
     # 验证错误
     ErrorCode.VALIDATION_REQUIRED_FIELD: "必填字段不能为空，请完整填写信息",

@@ -7,6 +7,7 @@ import os
 from typing import List, Dict, Any, Optional
 import asyncio
 from .adapters import get_global_adapter, run_async_safely
+import sys
 
 
 def initialize_openai_client():
@@ -24,11 +25,30 @@ def initialize_openai_client():
         # 获取全局适配器
         adapter = get_global_adapter(api_key)
         
-        # 异步初始化适配器
-        async def init_async():
-            return await adapter.initialize()
+        # 检查当前线程
+        import threading
+        current_thread_name = threading.current_thread().name
         
-        success = run_async_safely(init_async())
+        # 针对Streamlit的特殊处理
+        if 'ScriptRunner' in current_thread_name:
+            print(f"检测到Streamlit脚本运行器线程 '{current_thread_name}'")
+            
+            # 为Streamlit线程创建新的事件循环
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+            # 在此循环中运行初始化
+            success = loop.run_until_complete(adapter.initialize())
+        else:
+            # 异步初始化适配器
+            async def init_async():
+                return await adapter.initialize()
+            
+            success = run_async_safely(init_async())
         
         if success:
             print("✅ AI服务初始化成功")
@@ -58,12 +78,36 @@ def get_chatbot_response(client, user_input: str, conversation_history: List[Dic
         if not client:
             return "AI服务不可用，请检查配置。"
         
-        # 使用适配器获取响应
-        async def get_response_async():
-            return await client.get_chatbot_response(user_input, conversation_history)
+        # 检测是否在Streamlit环境中
+        in_streamlit = 'streamlit' in sys.modules
         
-        response = run_async_safely(get_response_async())
-        return str(response) if response else "响应获取失败"
+        # 使用适配器获取响应
+        if in_streamlit:
+            # Streamlit环境中，使用专门的处理方式
+            import asyncio
+            import concurrent.futures
+            
+            # 创建异步运行的函数
+            async def async_get_response():
+                return await client.get_chatbot_response(user_input, conversation_history)
+            
+            # 使用线程池执行器来运行异步代码
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(lambda: asyncio.run(async_get_response()))
+                try:
+                    response = future.result(timeout=60)  # 设置超时，避免永久阻塞
+                    return str(response) if response else "响应获取失败"
+                except concurrent.futures.TimeoutError:
+                    return "请求超时，请稍后再试"
+                except Exception as e:
+                    return f"获取响应失败: {str(e)}"
+        else:
+            # 非Streamlit环境，使用默认方法
+            async def get_response_async():
+                return await client.get_chatbot_response(user_input, conversation_history)
+            
+            response = run_async_safely(get_response_async())
+            return str(response) if response else "响应获取失败"
         
     except Exception as e:
         return f"获取响应失败: {str(e)}"

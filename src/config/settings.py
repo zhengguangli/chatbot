@@ -3,7 +3,7 @@
 """
 
 # OpenAI配置
-# DEFAULT_MODEL = "gpt-3.5-turbo"
+# DEFAULT_MODEL = "qwen3"
 DEFAULT_MODEL = "qwen3:4b"
 DEFAULT_MAX_TOKENS = 2048
 DEFAULT_TEMPERATURE = 0.7
@@ -26,7 +26,7 @@ CLI_HELP_MESSAGE = """
    2. 或者运行: export OPENAI_API_KEY=your_api_key
 
 📋 可选配置项：
-   • OPENAI_BASE_URI=https://api.openai.com/v1  # 自定义API端点
+   • OPENAI_API_BASE=https://api.openai.com/v1  # 自定义API端点
    • OPENAI_ORG_ID=your_organization_id        # 组织ID
    • OPENAI_PROJECT_ID=your_project_id          # 项目ID
    • OPENAI_TIMEOUT=30                          # 超时时间（秒）

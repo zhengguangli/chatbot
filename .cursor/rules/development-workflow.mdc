@@ -59,7 +59,7 @@ OPENAI_API_KEY=your_actual_api_key_here
 
 ### 可选配置
 ```bash
-OPENAI_BASE_URI=https://api.openai.com/v1      # 自定义API端点
+OPENAI_API_BASE=https://api.openai.com/v1      # 自定义API端点
 OPENAI_ORG_ID=your_organization_id              # 组织ID
 OPENAI_PROJECT_ID=your_project_id               # 项目ID  
 OPENAI_TIMEOUT=30                               # 超时时间

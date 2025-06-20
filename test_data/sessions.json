@@ -11,7 +11,7 @@
     "message_count": 0,
     "total_tokens": 0,
     "model_config": {
-      "model_name": "gpt-3.5-turbo",
+      "model_name": "qwen3",
       "provider": "openai",
       "temperature": 0.7,
       "max_tokens": 2000,
